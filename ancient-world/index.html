@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Ancient World — Quest for the Sunstone</title>
+<style>
+  :root{--gold:#f5c542;--ink:#eae4f2;--hp:#e0435a;--mp:#4aa3ff;--green:#4fd67a;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:#05060a;color:var(--ink);
+    font-family:'Segoe UI',system-ui,sans-serif;cursor:default}
+  #c{display:block;width:100vw;height:100vh}
+  .hide{display:none!important}
+
+  /* HUD */
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
+  #bars{position:absolute;left:20px;bottom:20px;width:250px;display:flex;flex-direction:column;gap:9px}
+  .bar{height:18px;background:#00000066;border:1px solid #ffffff22;border-radius:9px;overflow:hidden;position:relative;
+    box-shadow:0 2px 10px #0008}
+  .bar i{display:block;height:100%;transition:width .15s}
+  .bar span{position:absolute;inset:0;font-size:11px;font-weight:700;text-align:center;line-height:18px;text-shadow:0 1px 2px #000}
+  #stats{position:absolute;right:20px;bottom:20px;text-align:right;font-size:13px;text-shadow:0 1px 3px #000}
+  #stats b{color:var(--gold)}
+  #abilities{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:10px}
+  .ab{position:relative;width:62px;height:52px;background:#0b0814cc;border:1px solid #ffffff30;border-radius:8px;
+    overflow:hidden;text-align:center;box-shadow:0 3px 12px #0007}
+  .ab b{display:block;margin-top:6px;font-size:13px;color:var(--gold);font-weight:800;text-shadow:0 1px 2px #000}
+  .ab span{font-size:9.5px;opacity:.8;letter-spacing:.3px}
+  .ab i{position:absolute;left:0;bottom:0;width:100%;height:0%;background:#000a;border-top:1px solid #ffffff33}
+  #cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;opacity:.8}
+  #cross:before,#cross:after{content:'';position:absolute;background:#fff;box-shadow:0 0 3px #000}
+  #cross:before{left:50%;top:0;width:2px;height:100%;transform:translateX(-50%)}
+  #cross:after{top:50%;left:0;height:2px;width:100%;transform:translateY(-50%)}
+
+  /* Quest log */
+  #quest{position:absolute;left:20px;top:20px;width:290px;background:#0b0814d0;border:1px solid #ffffff22;
+    border-radius:10px;padding:12px 15px;font-size:13px;line-height:1.55;backdrop-filter:blur(3px);text-shadow:0 1px 2px #000}
+  #quest h3{color:var(--gold);font-size:13px;letter-spacing:1.5px;margin-bottom:7px}
+  #quest .obj{opacity:.55;transition:.3s}
+  #quest .obj.active{opacity:1;color:#fff}
+  #quest .obj.done{opacity:.5;color:var(--green);text-decoration:line-through}
+  #quest .obj.active:before{content:'▸ ';color:var(--gold)}
+
+  /* compass */
+  #compass{position:absolute;top:20px;left:50%;transform:translateX(-50%);
+    font-size:12px;letter-spacing:2px;text-shadow:0 1px 3px #000;opacity:.85}
+  #objtag{position:absolute;top:44px;left:50%;transform:translateX(-50%);
+    font-size:13px;color:var(--gold);text-shadow:0 1px 3px #000;font-weight:600}
+
+  /* dialog */
+  #dialog{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);width:min(720px,90vw);
+    background:#0b0814f2;border:1px solid var(--gold);border-radius:12px;padding:18px 24px;
+    box-shadow:0 10px 50px #000c;pointer-events:none}
+  #dialog .who{color:var(--gold);font-weight:800;font-size:16px;margin-bottom:7px;letter-spacing:.5px}
+  #dialog .txt{font-size:16px;line-height:1.6;min-height:48px}
+  #dialog .hint{margin-top:12px;font-size:12px;opacity:.55;text-align:right}
+
+  /* prompt */
+  #prompt{position:absolute;left:50%;top:58%;transform:translate(-50%,0);
+    background:#0b0814e6;border:1px solid var(--gold);color:var(--gold);font-weight:700;
+    padding:7px 18px;border-radius:22px;font-size:14px;text-shadow:0 1px 2px #000;pointer-events:none}
+
+  /* toast */
+  #toast{position:absolute;left:50%;top:120px;transform:translateX(-50%);
+    background:#0b0814ee;border:1px solid var(--gold);color:var(--gold);font-weight:700;
+    padding:9px 22px;border-radius:24px;font-size:15px;opacity:0;transition:opacity .35s;text-shadow:0 1px 2px #000}
+
+  #vignette{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 200px #000a;
+    background:radial-gradient(circle,transparent 55%,#000a 130%)}
+  #hurt{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,transparent 40%,#c0102888 120%);
+    opacity:0;transition:opacity .1s}
+
+  /* overlay */
+  #overlay{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:24px;background:radial-gradient(circle at 50% 35%,#170e2ef2,#04030899)}
+  #overlay h1{font-size:46px;color:var(--gold);letter-spacing:3px;text-shadow:0 0 30px #f5c54266;margin-bottom:6px}
+  #overlay h2{font-size:26px;color:var(--gold);letter-spacing:2px;margin-bottom:10px}
+  #overlay p{max-width:600px;font-size:15px;line-height:1.7;opacity:.9;margin-bottom:6px}
+  #overlay .keys{margin:16px 0;font-size:13.5px;line-height:2;opacity:.9}
+  #overlay .keys b{color:var(--gold)}
+  .btn{margin-top:14px;background:var(--gold);color:#20160a;border:0;padding:13px 40px;font-size:17px;
+    font-weight:800;letter-spacing:1px;border-radius:30px;cursor:pointer;box-shadow:0 8px 30px #f5c54244}
+  .btn:hover{transform:translateY(-2px)}
+  #loaderr{color:#ff8a8a;font-size:14px;max-width:520px;margin-top:14px}
+  .spin{margin-top:20px;width:40px;height:40px;border:4px solid #ffffff22;border-top-color:var(--gold);
+    border-radius:50%;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" class="hide">
+  <div id="compass">N</div>
+  <div id="objtag"></div>
+  <div id="cross"></div>
+  <div id="bars">
+    <div class="bar"><i id="hpbar" style="width:100%;background:linear-gradient(90deg,#b41f33,#ff6a7a)"></i><span id="hptext"></span></div>
+    <div class="bar"><i id="mpbar" style="width:100%;background:linear-gradient(90deg,#1e6fd0,#6fc0ff)"></i><span id="mptext"></span></div>
+    <div class="bar" style="height:12px"><i id="xpbar" style="width:0%;background:linear-gradient(90deg,#c78a2c,#f5c542)"></i><span id="xptext" style="line-height:12px;font-size:10px"></span></div>
+  </div>
+  <div id="abilities">
+    <div class="ab" data-k="lmb"><b>LMB</b><span>Sword</span><i></i></div>
+    <div class="ab" data-k="f"><b>F</b><span>Firebolt</span><i></i></div>
+    <div class="ab" data-k="q"><b>Q</b><span>Frost Nova</span><i></i></div>
+    <div class="ab" data-k="c"><b>C</b><span>Chain</span><i></i></div>
+    <div class="ab" data-k="r"><b>R</b><span>Heal</span><i></i></div>
+  </div>
+  <div id="stats"></div>
+  <div id="quest">
+    <h3>◈ THE QUEST FOR THE SUNSTONE</h3>
+    <div class="obj active" data-q="0">Find and speak with Eldrin the Wizard</div>
+    <div class="obj" data-q="1">Gather 5 glowing Moonflowers</div>
+    <div class="obj" data-q="2">Slay 15 shadow demons</div>
+    <div class="obj" data-q="3">Free the Forest Guardian</div>
+    <div class="obj" data-q="4">Light the 3 Ancient Braziers</div>
+    <div class="obj" data-q="5">Defeat the Demon Champion</div>
+    <div class="obj" data-q="6">Defeat the Demon Lord at the temple</div>
+    <div class="obj" data-q="7">Claim the Sunstone</div>
+  </div>
+  <div id="toast"></div>
+  <div id="prompt" class="hide"></div>
+  <div id="dialog" class="hide"><div class="who"></div><div class="txt"></div>
+    <div class="hint">[E] continue</div></div>
+  <div id="vignette"></div>
+  <div id="hurt"></div>
+</div>
+
+<div id="overlay">
+  <h1>THE ANCIENT WORLD</h1>
+  <p>You step into the <b>Verdant Preserve</b> — an ancient magical sanctuary now torn by a
+  demonic rift. Hidden deep within its ruined temple lies the legendary <b>Sunstone</b>.
+  Seek the wizard, gather the moonflowers, cut down the shadow demons, free the Forest Guardian,
+  kindle the ancient braziers, and cast down the Demon Champion and the Demon Lord to claim the artifact.</p>
+  <div class="keys">
+    <b>Space</b> move forward (where you look) &nbsp;·&nbsp; <b>Mouse</b> look<br>
+    <b>Left-Click</b> Sword &nbsp;·&nbsp; <b>Right-Click / F</b> Firebolt &nbsp;·&nbsp; <b>Q</b> Frost Nova<br>
+    <b>C</b> Chain Lightning &nbsp;·&nbsp; <b>R</b> Heal &nbsp;·&nbsp; <b>E</b> talk / interact<br>
+    <span style="opacity:.7">Slay demons to gain XP and <b>level up</b>. Enemies drop red (health) and blue (mana) orbs.</span>
+  </div>
+  <div id="startArea"><button class="btn" id="startBtn">ENTER THE PRESERVE</button>
+    <p style="margin-top:10px;font-size:12px;opacity:.6">Click to lock the mouse. Press Esc to release.</p></div>
+  <div id="loaderr"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+if(typeof THREE==='undefined'){
+  $('#startArea').classList.add('hide');
+  $('#loaderr').innerHTML="Couldn't load the 3D engine (Three.js) from the internet.<br>"+
+    "Connect to the internet and reload — the game streams its engine from a CDN.";
+  return;
+}
+
+// ============================================================= SCENE
+const canvas=$('#c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.05;
+
+const scene=new THREE.Scene();
+const FOG=new THREE.Color(0x2a3348);
+scene.fog=new THREE.FogExp2(FOG,0.006);
+scene.background=makeSky();
+
+const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,0.1,1000);
+const camHolder=new THREE.Object3D();      // yaw
+const camPitch=new THREE.Object3D();       // pitch
+camHolder.add(camPitch); camPitch.add(camera);
+scene.add(camHolder);
+
+function makeSky(){
+  const cvs=document.createElement('canvas');cvs.width=16;cvs.height=256;
+  const g=cvs.getContext('2d').createLinearGradient(0,0,0,256);
+  g.addColorStop(0,'#1a2a4a');g.addColorStop(0.5,'#3a4a6a');g.addColorStop(0.75,'#6a5a7a');g.addColorStop(1,'#caa07a');
+  const cx=cvs.getContext('2d');cx.fillStyle=g;cx.fillRect(0,0,16,256);
+  const t=new THREE.CanvasTexture(cvs);t.magFilter=THREE.LinearFilter;return t;
+}
+
+// ============================================================= LIGHT
+const hemi=new THREE.HemisphereLight(0x9fb4e0,0x33402a,0.65);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffe6b8,1.15);
+sun.position.set(80,120,40);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+const sc=sun.shadow.camera;sc.left=-160;sc.right=160;sc.top=160;sc.bottom=-160;sc.near=1;sc.far=400;
+sun.shadow.bias=-0.0004;
+scene.add(sun);scene.add(sun.target);
+const ambient=new THREE.AmbientLight(0x404860,0.4);scene.add(ambient);
+
+// ============================================================= TEXTURES (procedural)
+function noiseTex(base,speck,size,density){
+  const cvs=document.createElement('canvas');cvs.width=cvs.height=size;const x=cvs.getContext('2d');
+  x.fillStyle=base;x.fillRect(0,0,size,size);
+  for(let i=0;i<density;i++){x.fillStyle=speck[(Math.random()*speck.length)|0];
+    const r=Math.random()*2.4+.5;x.beginPath();x.arc(Math.random()*size,Math.random()*size,r,0,7);x.fill();}
+  const t=new THREE.CanvasTexture(cvs);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;
+}
+const grassTex=noiseTex('#2f5330',['#264a27','#3a6b39','#38602f','#213f22'],256,2600);
+grassTex.repeat.set(60,60);
+const barkTex=noiseTex('#4a3320',['#3a2716','#5a4028','#2e2013'],64,500);
+const rockTex=noiseTex('#6a6a72',['#55555c','#7a7a82','#4a4a52'],128,900);
+
+// ============================================================= WORLD
+const WORLD=470;                     // half-size
+const obstacles=[];                  // {x,z,r}
+const collidersDynamic=[];           // demons etc for firebolt/sword
+function addObstacle(x,z,r){obstacles.push({x,z,r});}
+
+// ground
+const ground=new THREE.Mesh(
+  new THREE.PlaneGeometry(WORLD*2,WORLD*2,1,1),
+  new THREE.MeshStandardMaterial({map:grassTex,roughness:1,metalness:0}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+
+// distant ring of mountains (fog-faded)
+for(let i=0;i<26;i++){
+  const a=i/26*Math.PI*2,d=WORLD*1.15+Math.random()*40;
+  const h=60+Math.random()*90;
+  const m=new THREE.Mesh(new THREE.ConeGeometry(50+Math.random()*40,h,7),
+    new THREE.MeshStandardMaterial({color:0x2c3550,roughness:1,flatShading:true}));
+  m.position.set(Math.cos(a)*d,h/2-8,Math.sin(a)*d);scene.add(m);
+}
+
+// tree factory
+const trunkGeo=new THREE.CylinderGeometry(0.6,0.9,7,6);
+const leafGeoA=new THREE.ConeGeometry(4.2,7,7);
+const leafGeoB=new THREE.ConeGeometry(3.3,6,7);
+const leafGeoC=new THREE.ConeGeometry(2.4,5,7);
+const trunkMat=new THREE.MeshStandardMaterial({map:barkTex,roughness:1});
+function leafMat(dark){return new THREE.MeshStandardMaterial({color:dark?0x1f4d24:0x2f6b34,roughness:1,flatShading:true});}
+function makeTree(x,z,s){
+  const g=new THREE.Group();
+  const tr=new THREE.Mesh(trunkGeo,trunkMat);tr.position.y=3.5;tr.castShadow=true;g.add(tr);
+  const lm=leafMat(Math.random()<.5);
+  const l1=new THREE.Mesh(leafGeoA,lm);l1.position.y=8;l1.castShadow=true;g.add(l1);
+  const l2=new THREE.Mesh(leafGeoB,lm);l2.position.y=11;l2.castShadow=true;g.add(l2);
+  const l3=new THREE.Mesh(leafGeoC,lm);l3.position.y=13.5;l3.castShadow=true;g.add(l3);
+  g.position.set(x,0,z);g.scale.setScalar(s);g.rotation.y=Math.random()*7;
+  scene.add(g);addObstacle(x,z,1.4*s);
+}
+// scatter trees, keeping clearings around key spots
+const KEY=[[0,40,16],[130,-190,20],[-260,150,20],[0,-380,40],[220,200,16],
+  [-330,-120,16],[300,-80,16],[-120,320,16],
+  [250,60,14],[-200,-250,14],[60,250,14]]; //[x,z,clearR]
+function inClearing(x,z){for(const k of KEY)if(Math.hypot(x-k[0],z-k[1])<k[2])return true;return false;}
+const rng=mulberry(1337);
+for(let i=0;i<720;i++){
+  const x=(rng()*2-1)*WORLD*0.96,z=(rng()*2-1)*WORLD*0.96;
+  if(inClearing(x,z))continue;
+  if(Math.hypot(x,z)>WORLD*0.98)continue;
+  makeTree(x,z,0.8+rng()*0.9);
+}
+// rocks
+const rockMat=new THREE.MeshStandardMaterial({map:rockTex,roughness:1,flatShading:true});
+for(let i=0;i<110;i++){
+  const x=(rng()*2-1)*WORLD*0.9,z=(rng()*2-1)*WORLD*0.9;if(inClearing(x,z))continue;
+  const s=1.4+rng()*3.4;
+  const m=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),rockMat);
+  m.position.set(x,s*0.5,z);m.rotation.set(rng()*7,rng()*7,rng()*7);m.castShadow=true;m.receiveShadow=true;
+  scene.add(m);addObstacle(x,z,s*0.8);
+}
+// ground fog patches / glowing mushrooms for atmosphere
+for(let i=0;i<130;i++){
+  const x=(rng()*2-1)*WORLD*0.9,z=(rng()*2-1)*WORLD*0.9;
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.35,8,8),
+    new THREE.MeshStandardMaterial({color:0x6fe0ff,emissive:0x2fa0d0,emissiveIntensity:1.4,roughness:.4}));
+  m.position.set(x,0.35,z);scene.add(m);
+}
+
+// fireflies (points)
+const flyGeo=new THREE.BufferGeometry();
+const flyN=260,flyPos=new Float32Array(flyN*3),flyPhase=[];
+for(let i=0;i<flyN;i++){
+  flyPos[i*3]=(rng()*2-1)*WORLD*0.8;flyPos[i*3+1]=1+rng()*7;flyPos[i*3+2]=(rng()*2-1)*WORLD*0.8;
+  flyPhase.push(rng()*7);
+}
+flyGeo.setAttribute('position',new THREE.BufferAttribute(flyPos,3));
+const flyMat=new THREE.PointsMaterial({color:0xffe08a,size:0.55,transparent:true,opacity:.9,
+  blending:THREE.AdditiveBlending,depthWrite:false});
+const fireflies=new THREE.Points(flyGeo,flyMat);scene.add(fireflies);
+
+// ============================================================= WAYPOINT BEACONS
+function makeBeacon(x,z,color){
+  const g=new THREE.Group();
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,60,10,1,true),
+    new THREE.MeshBasicMaterial({color,transparent:true,opacity:.28,side:THREE.DoubleSide,
+      blending:THREE.AdditiveBlending,depthWrite:false}));
+  beam.position.y=30;g.add(beam);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(1.6,2.2,24),
+    new THREE.MeshBasicMaterial({color,transparent:true,opacity:.5,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=0.1;g.add(ring);
+  g.position.set(x,0,z);scene.add(g);return g;
+}
+
+// ============================================================= NPCs & OBJECTS
+// --- Wizard
+function makeWizard(x,z){
+  const g=new THREE.Group();
+  const robe=new THREE.Mesh(new THREE.ConeGeometry(1.5,3.4,10),
+    new THREE.MeshStandardMaterial({color:0x5a3fa0,roughness:.8}));robe.position.y=1.7;robe.castShadow=true;g.add(robe);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.55,16,16),
+    new THREE.MeshStandardMaterial({color:0xe8c39a,roughness:.7}));head.position.y=3.6;g.add(head);
+  const beard=new THREE.Mesh(new THREE.ConeGeometry(0.5,1.1,8),
+    new THREE.MeshStandardMaterial({color:0xf0f0f4,roughness:.9}));beard.position.set(0,3.2,0.35);beard.rotation.x=0.2;g.add(beard);
+  const hat=new THREE.Mesh(new THREE.ConeGeometry(0.9,1.8,10),
+    new THREE.MeshStandardMaterial({color:0x40277a,roughness:.8}));hat.position.y=4.6;g.add(hat);
+  const staff=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09,4,6),
+    new THREE.MeshStandardMaterial({color:0x6a4a2a,roughness:.9}));staff.position.set(1.3,2,0);g.add(staff);
+  const orb=new THREE.Mesh(new THREE.SphereGeometry(0.4,16,16),
+    new THREE.MeshStandardMaterial({color:0x6fc0ff,emissive:0x3a90e0,emissiveIntensity:2,roughness:.3}));
+  orb.position.set(1.3,4.2,0);g.add(orb);
+  const oL=new THREE.PointLight(0x6fc0ff,1.2,14);oL.position.copy(orb.position);g.add(oL);
+  g.position.set(x,0,z);scene.add(g);addObstacle(x,z,1.4);
+  return {group:g,orb:orb,x,z};
+}
+// --- Forest Guardian (caged magical creature)
+function makeGuardian(x,z){
+  const g=new THREE.Group();
+  // cage
+  const cageMat=new THREE.MeshStandardMaterial({color:0x3a3040,roughness:.6,metalness:.3});
+  for(let i=0;i<8;i++){const a=i/8*Math.PI*2;
+    const bar=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,5,6),cageMat);
+    bar.position.set(Math.cos(a)*1.6,2.5,Math.sin(a)*1.6);g.add(bar);}
+  const capTop=new THREE.Mesh(new THREE.TorusGeometry(1.6,0.15,8,20),cageMat);capTop.rotation.x=Math.PI/2;capTop.position.y=5;g.add(capTop);
+  const capBot=capTop.clone();capBot.position.y=0.2;g.add(capBot);
+  // shadow lattice
+  const lattice=new THREE.Mesh(new THREE.SphereGeometry(1.9,16,16),
+    new THREE.MeshStandardMaterial({color:0x2a0f3a,emissive:0x5a1f8a,emissiveIntensity:.8,
+      transparent:true,opacity:.35,wireframe:true}));
+  lattice.position.y=2.5;g.add(lattice);
+  // creature (glowing deer-spirit-ish orb+antlers)
+  const cre=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.SphereGeometry(0.9,20,20),
+    new THREE.MeshStandardMaterial({color:0xbff5cf,emissive:0x3fd67a,emissiveIntensity:1.6,roughness:.4}));
+  cre.add(body);
+  for(const sx of [-1,1]){
+    const ant=new THREE.Mesh(new THREE.ConeGeometry(0.1,1.4,5),
+      new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x6ff0a0,emissiveIntensity:1.2}));
+    ant.position.set(sx*0.4,1.0,0);ant.rotation.z=sx*0.5;cre.add(ant);
+  }
+  cre.position.y=2.5;g.add(cre);
+  const gl=new THREE.PointLight(0x4fd67a,1.3,16);gl.position.y=2.5;g.add(gl);
+  g.position.set(x,0,z);scene.add(g);addObstacle(x,z,2);
+  return {group:g,cre:cre,lattice:lattice,light:gl,x,z,freed:false};
+}
+// --- Moonflowers (collectibles)
+function makeMoonflower(x,z){
+  const g=new THREE.Group();
+  const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.07,1.2,5),
+    new THREE.MeshStandardMaterial({color:0x2f6b34}));stem.position.y=0.6;g.add(stem);
+  const bloom=new THREE.Mesh(new THREE.IcosahedronGeometry(0.5,0),
+    new THREE.MeshStandardMaterial({color:0xd8e0ff,emissive:0x8aa0ff,emissiveIntensity:2,roughness:.3}));
+  bloom.position.y=1.3;g.add(bloom);
+  const l=new THREE.PointLight(0x8aa0ff,0.9,9);l.position.y=1.4;g.add(l);
+  g.position.set(x,0,z);scene.add(g);
+  return {group:g,bloom:bloom,x,z,taken:false};
+}
+// --- Temple + Sunstone shrine
+let templeGroup;
+function makeTemple(x,z){
+  const g=new THREE.Group();templeGroup=g;
+  const floor=new THREE.Mesh(new THREE.CylinderGeometry(16,17,1,32),
+    new THREE.MeshStandardMaterial({color:0x8a8478,roughness:.9,map:rockTex}));floor.position.y=.5;floor.receiveShadow=true;g.add(floor);
+  const step=new THREE.Mesh(new THREE.CylinderGeometry(11,11,1,32),floor.material);step.position.y=1.2;g.add(step);
+  const pillarMat=new THREE.MeshStandardMaterial({color:0x9a9488,roughness:.9,map:rockTex});
+  for(let i=0;i<10;i++){const a=i/10*Math.PI*2;
+    const p=new THREE.Mesh(new THREE.CylinderGeometry(0.9,1.1,16,10),pillarMat);
+    p.position.set(Math.cos(a)*13,8.5,Math.sin(a)*13);p.castShadow=true;g.add(p);
+    if(i%3){const cap=new THREE.Mesh(new THREE.BoxGeometry(2.6,1,2.6),pillarMat);cap.position.set(Math.cos(a)*13,16.6,Math.sin(a)*13);g.add(cap);}
+    addObstacle(x+Math.cos(a)*13,z+Math.sin(a)*13,1.2);
+  }
+  // altar
+  const altar=new THREE.Mesh(new THREE.CylinderGeometry(1.6,2,2.4,8),pillarMat);altar.position.y=2.4;altar.castShadow=true;g.add(altar);
+  // Sunstone
+  const stone=new THREE.Mesh(new THREE.OctahedronGeometry(1.1,0),
+    new THREE.MeshStandardMaterial({color:0xf5c542,emissive:0xffaa10,emissiveIntensity:2.4,roughness:.15,metalness:.4}));
+  stone.position.y=4.4;g.add(stone);
+  const sL=new THREE.PointLight(0xffc040,2.4,40);sL.position.y=5;g.add(sL);
+  g.position.set(x,0,z);scene.add(g);addObstacle(x,z,2.2);
+  return {group:g,stone:stone,light:sL,x,z,active:false,taken:false};
+}
+
+const wizard=makeWizard(0,44);
+const guardian=makeGuardian(-260,150);
+const moon=[makeMoonflower(130,-190),makeMoonflower(220,200),makeMoonflower(-120,320),
+  makeMoonflower(-330,-120),makeMoonflower(300,-80)];
+const shrine=makeTemple(0,-380);
+
+// --- Ancient Braziers (light all 3 to unseal the temple)
+function makeBrazier(x,z){
+  const g=new THREE.Group();
+  const baseMat=new THREE.MeshStandardMaterial({map:rockTex,color:0x8a8478,roughness:.9});
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.9,3,8),baseMat);
+  base.position.y=1.5;base.castShadow=true;g.add(base);
+  const bowl=new THREE.Mesh(new THREE.CylinderGeometry(1.1,0.7,0.8,10),baseMat);bowl.position.y=3.3;g.add(bowl);
+  const fire=new THREE.Mesh(new THREE.ConeGeometry(0.8,2.2,8),
+    new THREE.MeshBasicMaterial({color:0xff8a2c,transparent:true,opacity:.92,
+      blending:THREE.AdditiveBlending,depthWrite:false}));
+  fire.position.y=4.5;fire.visible=false;g.add(fire);
+  const l=new THREE.PointLight(0xff7a20,0,22);l.position.y=4.6;g.add(l);
+  g.position.set(x,0,z);scene.add(g);addObstacle(x,z,0.9);
+  return {group:g,fire:fire,light:l,x,z,lit:false};
+}
+const braziers=[makeBrazier(250,60),makeBrazier(-200,-250),makeBrazier(60,250)];
+
+const beacon=makeBeacon(0,44,0x6fc0ff);   // starts pointing at wizard
+
+// ============================================================= DEMONS
+const demons=[];
+// enemy archetypes — {hp,speed,dmg,scale,col,em,eye,xp,range,cd,glow,ranged,label}
+const DTYPES={
+  grunt:{hp:54, speed:5.8, dmg:11, scale:1.0, col:0x2e1544, em:0x2a0a4a, eye:0xff3020, xp:14, range:2.6, cd:1.2, glow:0.7, label:'Shadow Demon'},
+  imp:  {hp:26, speed:9.6, dmg:7,  scale:0.65,col:0x7a2810, em:0xd23a10, eye:0xffcc20, xp:9,  range:2.2, cd:0.9, glow:0.9, label:'Imp'},
+  brute:{hp:150,speed:3.2, dmg:22, scale:1.9, col:0x241030, em:0x3a1050, eye:0xff2020, xp:34, range:3.2, cd:1.6, glow:1.0, label:'Brute'},
+  shade:{hp:42, speed:4.4, dmg:9,  scale:1.1, col:0x123047, em:0x1f6a8a, eye:0x6fe0ff, xp:22, range:40, cd:2.0, glow:1.1, ranged:true, label:'Shade'},
+  champion:{hp:120,speed:4.6,dmg:12,scale:1.7, col:0x431a66, em:0x5a1f8a, eye:0xff3020, xp:75, range:3,   cd:1.3, glow:1.4, label:'Demon Champion'},
+  boss:{hp:200,speed:3.8, dmg:13, scale:2.6, col:0x5a1030, em:0x7a1030, eye:0xff3020, xp:340, range:4,   cd:1.5, glow:2.0, label:'Demon Lord'}
+};
+function makeDemon(x,z,type){
+  type=type||'grunt';const T=DTYPES[type],s=T.scale;
+  const boss=type==='boss',champion=type==='champion';
+  const g=new THREE.Group();
+  const bodyMat=new THREE.MeshStandardMaterial({color:T.col,roughness:.6,emissive:T.em,emissiveIntensity:.6});
+  const body=new THREE.Mesh(new THREE.SphereGeometry(1.1,16,16),bodyMat);body.position.y=1.5;body.castShadow=true;g.add(body);
+  const belly=new THREE.Mesh(new THREE.SphereGeometry(0.9,12,12),bodyMat);belly.position.y=0.7;belly.castShadow=true;g.add(belly);
+  for(const sx of[-1,1]){const h=new THREE.Mesh(new THREE.ConeGeometry(0.25,1.1,6),
+    new THREE.MeshStandardMaterial({color:0x120515,roughness:.4}));
+    h.position.set(sx*0.5,2.4,-0.1);h.rotation.z=sx*-0.5;g.add(h);}
+  const eyeMat=new THREE.MeshStandardMaterial({color:T.eye,emissive:T.eye,emissiveIntensity:3});
+  for(const sx of[-1,1]){const e=new THREE.Mesh(new THREE.SphereGeometry(0.16,8,8),eyeMat);
+    e.position.set(sx*0.35,1.7,0.95);g.add(e);}
+  for(const sx of[-1,1]){const a=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.16,1.4,6),bodyMat);
+    a.position.set(sx*1.1,1.4,0.2);a.rotation.z=sx*0.7;g.add(a);}
+  const gl=new THREE.PointLight(T.eye,T.glow,8*Math.max(1,s));gl.position.y=1.6;g.add(gl);
+  g.scale.setScalar(s);g.position.set(x,0,z);scene.add(g);
+  const hpJit=Math.round(T.hp*(0.9+Math.random()*0.25));
+  const d={group:g,x,z,type:type,label:T.label,hp:hpJit,max:hpJit,boss:boss,champion:champion,
+    ranged:!!T.ranged,dmg:T.dmg,atkRange:T.range,atkCdMax:T.cd,xp:T.xp,
+    speed:T.speed*(0.9+Math.random()*0.2),atkCd:Math.random()*0.5,hurtT:0,slow:0,alive:true,r:1.1*s,
+    body:body,bodyMat:bodyMat,wob:Math.random()*7,summoned:false};
+  demons.push(d);return d;
+}
+let demonsToSpawn=15,killGoal=15;
+function randomType(){const r=Math.random();
+  if(r<0.42)return'grunt';if(r<0.72)return'imp';if(r<0.89)return'shade';return'brute';}
+function spawnWave(type){
+  const a=Math.random()*Math.PI*2,d=42+Math.random()*34;
+  makeDemon(camHolder.position.x+Math.cos(a)*d,camHolder.position.z+Math.sin(a)*d,type||randomType());
+}
+
+// ============================================================= FIREBOLTS + FX
+const bolts=[];
+function castBolt(){
+  const dir=new THREE.Vector3();camera.getWorldDirection(dir);
+  const pos=new THREE.Vector3();camera.getWorldPosition(pos);
+  pos.addScaledVector(dir,1.2);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),
+    new THREE.MeshBasicMaterial({color:0xff9a3c}));
+  m.position.copy(pos);scene.add(m);
+  const l=new THREE.PointLight(0xff7a2c,2,12);m.add(l);
+  bolts.push({mesh:m,dir:dir.clone(),life:2.2,dmg:36*player.dmgMult});
+  swingArm(true);
+}
+// enemy projectiles (shades)
+const eBolts=[];
+function fireEnemyBolt(d){
+  const from=new THREE.Vector3(d.x,1.7,d.z);
+  const to=new THREE.Vector3(camHolder.position.x,player.eye-0.4,camHolder.position.z);
+  const dir=to.sub(from).normalize();
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.35,10,10),
+    new THREE.MeshBasicMaterial({color:0x9f6cff}));
+  m.position.copy(from);scene.add(m);const l=new THREE.PointLight(0x9f6cff,1.6,10);m.add(l);
+  eBolts.push({mesh:m,dir:dir,life:3.2,dmg:d.dmg});
+}
+// expanding rings + lightning arcs
+const rings=[],zaps=[];
+function spawnRing(x,z,color,maxR){
+  const m=new THREE.Mesh(new THREE.RingGeometry(0.6,1.1,36),
+    new THREE.MeshBasicMaterial({color,transparent:true,opacity:.85,side:THREE.DoubleSide,
+      blending:THREE.AdditiveBlending,depthWrite:false}));
+  m.rotation.x=-Math.PI/2;m.position.set(x,0.35,z);scene.add(m);
+  rings.push({mesh:m,life:0.6,max:0.6,maxR:maxR});
+}
+function spawnLightning(a,b){
+  const pts=[],seg=7;
+  for(let i=0;i<=seg;i++){const p=a.clone().lerp(b,i/seg);
+    if(i>0&&i<seg){p.x+=(Math.random()-0.5)*1.3;p.y+=(Math.random()-0.5)*1.3;p.z+=(Math.random()-0.5)*1.3;}
+    pts.push(p);}
+  const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({color:0xaef0ff,transparent:true,opacity:1}));
+  scene.add(line);zaps.push({line:line,life:0.2});
+}
+// loot orbs
+const orbs=[];
+function spawnOrb(x,z,kind){
+  const col=kind==='hp'?0xff4a5a:0x4aa3ff;
+  const m=new THREE.Mesh(new THREE.IcosahedronGeometry(0.4,0),
+    new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:2.2,roughness:.3}));
+  m.position.set(x,1.2,z);scene.add(m);const l=new THREE.PointLight(col,1.1,7);m.add(l);
+  orbs.push({mesh:m,x:x,z:z,kind:kind});
+}
+function maybeDropLoot(d){
+  if(d.boss||d.champion){spawnOrb(d.x-1.5,d.z,'hp');spawnOrb(d.x+1.5,d.z,'mp');return;}
+  const r=Math.random();
+  if(r<0.16)spawnOrb(d.x,d.z,'hp');
+  else if(r<0.32)spawnOrb(d.x,d.z,'mp');
+}
+const particles=[];
+function burst(pos,color,n,spd){
+  for(let i=0;i<n;i++){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(0.12,6,6),
+      new THREE.MeshBasicMaterial({color,transparent:true}));
+    m.position.copy(pos);
+    const v=new THREE.Vector3((Math.random()*2-1),(Math.random()*2-1),(Math.random()*2-1)).normalize()
+      .multiplyScalar((spd||4)*(0.4+Math.random()));
+    scene.add(m);particles.push({mesh:m,v,life:0.6});
+  }
+}
+
+// ============================================================= VIEW MODEL (sword + hand)
+const viewModel=new THREE.Group();camera.add(viewModel);
+const sword=new THREE.Group();
+const blade=new THREE.Mesh(new THREE.BoxGeometry(0.08,1.5,0.02),
+  new THREE.MeshStandardMaterial({color:0xdfe6ee,metalness:.9,roughness:.25,emissive:0x223,emissiveIntensity:.2}));
+blade.position.y=0.85;sword.add(blade);
+const guard=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.1,0.1),
+  new THREE.MeshStandardMaterial({color:0xf5c542,metalness:.8,roughness:.3}));guard.position.y=0.1;sword.add(guard);
+const grip=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.4,8),
+  new THREE.MeshStandardMaterial({color:0x5a3a1e,roughness:.9}));grip.position.y=-0.15;sword.add(grip);
+sword.position.set(0.42,-0.42,-0.9);sword.rotation.set(0.2,-0.3,0.15);
+viewModel.add(sword);
+
+let swingT=0,swingType=0; // 0 sword,1 cast
+function swingArm(cast){swingT=1;swingType=cast?1:0;}
+
+// ============================================================= PLAYER STATE
+const player={hp:100,maxhp:100,mp:100,maxmp:100,speed:34,sprint:44,
+  vy:0,onGround:true,eye:3.4,atkCd:0,castCd:0,hurtCd:0,invuln:0,kills:0,
+  level:1,xp:0,xpNext:40,dmgMult:1,novaCd:0,healCd:0,chainCd:0};
+camHolder.position.set(0,player.eye,66);
+let yaw=0,pitch=0;
+camHolder.rotation.y=yaw;
+
+// input
+const keys={};const tap={};
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(!keys[k])tap[k]=true;keys[k]=true;
+  if(k===' ')e.preventDefault();});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+function tapped(k){if(tap[k]){tap[k]=false;return true;}return false;}
+
+let locked=false;
+canvas.addEventListener('click',()=>{if(gameState==='play'&&!locked)canvas.requestPointerLock();});
+document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===canvas;});
+document.addEventListener('mousemove',e=>{
+  if(!locked)return;
+  yaw-=e.movementX*0.0022;pitch-=e.movementY*0.0022;
+  pitch=Math.max(-1.4,Math.min(1.4,pitch));
+  camHolder.rotation.y=yaw;camPitch.rotation.x=pitch;
+});
+addEventListener('mousedown',e=>{
+  if(gameState!=='play'||!locked)return;
+  if(e.button===0)meleeAttack();
+  if(e.button===2)tryCast();
+});
+addEventListener('contextmenu',e=>e.preventDefault());
+
+// ============================================================= COMBAT
+function meleeAttack(){
+  if(player.atkCd>0)return;player.atkCd=0.36;swingArm(false);
+  const origin=new THREE.Vector3();camera.getWorldPosition(origin);
+  const dir=new THREE.Vector3();camera.getWorldDirection(dir);
+  for(const d of demons){if(!d.alive)continue;
+    const to=new THREE.Vector3(d.x,1.4,d.z).sub(origin);
+    const dist=to.length();if(dist>4.5+d.r)continue;
+    if(to.normalize().dot(dir)>0.55){hurtDemon(d,28*player.dmgMult,dir);}
+  }
+}
+function tryCast(){
+  if(player.castCd>0||player.mp<20)return;player.castCd=0.5;player.mp-=20;castBolt();
+}
+// ability: Frost Nova (Q) — AoE burst + slow
+function castNova(){
+  if(player.novaCd>0||player.mp<30)return;player.novaCd=5;player.mp-=30;
+  const px=camHolder.position.x,pz=camHolder.position.z;
+  spawnRing(px,pz,0x6fd0ff,13);
+  for(const d of demons){if(!d.alive)continue;const dd=Math.hypot(d.x-px,d.z-pz);
+    if(dd<13){hurtDemon(d,34*player.dmgMult,{x:(d.x-px)/(dd||1),z:(d.z-pz)/(dd||1)});d.slow=3;}}
+  toast('Frost Nova!');
+}
+// ability: Chain Lightning (C)
+function castChain(){
+  if(player.chainCd>0||player.mp<35)return;
+  const px=camHolder.position.x,pz=camHolder.position.z;
+  const dir=new THREE.Vector3();camera.getWorldDirection(dir);
+  const fwd=new THREE.Vector3(dir.x,0,dir.z).normalize();
+  let first=null,best=1e9;
+  for(const d of demons){if(!d.alive)continue;
+    const to=new THREE.Vector3(d.x-px,0,d.z-pz);const dist=to.length();
+    if(dist>44)continue;if(to.normalize().dot(fwd)<0.25)continue;
+    if(dist<best){best=dist;first=d;}}
+  if(!first)return; // no target in view — don't waste it
+  player.chainCd=6;player.mp-=35;
+  const hit=new Set([first]);let cur=first,chain=[first];
+  for(let i=0;i<3;i++){let nb=null,nbest=1e9;
+    for(const d of demons){if(!d.alive||hit.has(d))continue;const dist=Math.hypot(d.x-cur.x,d.z-cur.z);
+      if(dist<17&&dist<nbest){nbest=dist;nb=d;}}
+    if(!nb)break;hit.add(nb);chain.push(nb);cur=nb;}
+  let prev=new THREE.Vector3(px,player.eye-0.4,pz),dmg=46*player.dmgMult;
+  for(const d of chain){const pt=new THREE.Vector3(d.x,1.6,d.z);
+    spawnLightning(prev,pt);hurtDemon(d,dmg,{x:0,z:0});burst(pt,0xaef0ff,8,5);prev=pt;dmg*=0.8;}
+  toast('Chain Lightning!');
+}
+// ability: Heal (R)
+function castHeal(){
+  if(player.healCd>0||player.mp<40||player.hp>=player.maxhp)return;
+  player.healCd=7;player.mp-=40;player.hp=Math.min(player.maxhp,player.hp+45);
+  burst(new THREE.Vector3(camHolder.position.x,player.eye,camHolder.position.z),0x4fd67a,28,4);
+  toast('Healed!');
+}
+function gainXP(n){player.xp+=n;
+  while(player.xp>=player.xpNext){player.xp-=player.xpNext;levelUp();}
+}
+function levelUp(){
+  player.level++;player.maxhp+=20;player.maxmp+=10;
+  player.hp=player.maxhp;player.mp=player.maxmp;
+  player.dmgMult=1+(player.level-1)*0.15;
+  player.xpNext=Math.round(player.xpNext*1.5);
+  burst(new THREE.Vector3(camHolder.position.x,player.eye,camHolder.position.z),0xf5c542,36,6);
+  toast('LEVEL UP!  You are now Level '+player.level);
+}
+function hurtDemon(d,dmg,dir){
+  if(!d.alive)return;d.hp-=dmg;d.hurtT=0.12;
+  const p=new THREE.Vector3(d.x,1.6,d.z);burst(p,0x9b5cff,10,6);
+  const kb=(d.boss||d.champion||d.type==='brute')?0.3:1.1;
+  d.x+=dir.x*kb;d.z+=dir.z*kb;
+  if(d.hp<=0){killDemon(d);}
+}
+function killDemon(d){
+  d.alive=false;scene.remove(d.group);
+  burst(new THREE.Vector3(d.x,1.6,d.z),0xb070ff,26,8);
+  gainXP(d.xp||10);maybeDropLoot(d);
+  if(d.boss){onBossDead();return;}
+  if(d.champion){onChampionDead();return;}
+  player.kills++;
+  if(player.kills<=killGoal){
+    if(player.kills===killGoal){setDone(2);toast('The demon horde is broken!');
+      if(quest>=2&&!guardian.freed) advanceIfReady();}
+    else toast('Demon slain  ('+player.kills+'/'+killGoal+')');
+  }
+  // heal a little
+  player.hp=Math.min(player.maxhp,player.hp+4);
+}
+function hurtPlayer(dmg){
+  if(player.invuln>0)return;player.hp-=dmg;player.invuln=0.5;player.hurtCd=0.35;
+  flashHurt();if(player.hp<=0){player.hp=0;gameOver();}
+}
+
+// ============================================================= QUEST FLOW
+let quest=0;           // current stage 0..5
+let flowersGot=0;
+const overlay=$('#overlay');
+function setActive(i){document.querySelectorAll('#quest .obj').forEach(o=>{
+  const q=+o.dataset.q;o.classList.toggle('active',q===i&&!o.classList.contains('done'));});}
+function setDone(i){const o=document.querySelector('#quest .obj[data-q="'+i+'"]');
+  if(o){o.classList.add('done');o.classList.remove('active');}}
+const objNames=['Speak with Eldrin the Wizard','Gather Moonflowers','Slay the shadow demons',
+  'Free the Forest Guardian','Light the Ancient Braziers','Defeat the Demon Champion',
+  'Defeat the Demon Lord','Claim the Sunstone'];
+function setQuest(i){quest=i;setActive(i);$('#objtag').textContent='Objective: '+objNames[i];updateBeacon();}
+function updateBeacon(){
+  let t=null;
+  if(quest===0)t=wizard;
+  else if(quest===1)t=moon.find(m=>!m.taken)||wizard;
+  else if(quest===2)t=null; // demons roam
+  else if(quest===3)t=guardian;
+  else if(quest===4)t=braziers.find(b=>!b.lit)||shrine;
+  else t=shrine; // 5,6,7 all at the temple
+  if(!t){beacon.visible=false;return;}
+  beacon.visible=true;beacon.position.set(t.x,0,t.z);
+}
+
+// dialog
+let dlgQ=[],dlgOn=false,dlgAfter=null;
+const dlg=$('#dialog');
+function say(who,lines,after){dlgQ=lines.slice();dlgAfter=after||null;dlgOn=true;
+  dlg.classList.remove('hide');dlg.querySelector('.who').textContent=who;nextLine();}
+function nextLine(){if(dlgQ.length===0){dlg.classList.add('hide');dlgOn=false;
+    const f=dlgAfter;dlgAfter=null;if(f)f();return;}
+  dlg.querySelector('.txt').textContent=dlgQ.shift();}
+
+function advanceIfReady(){
+  // called when both demons cleared & already at guardian stage etc — placeholder
+}
+
+function interact(){
+  const px=camHolder.position.x,pz=camHolder.position.z;
+  const near=(o)=>Math.hypot(px-o.x,pz-o.z)<6.5;
+  // wizard
+  if(near(wizard)){
+    if(quest===0){
+      say('Eldrin the Wizard',[
+        "At last — a living soul braves the Preserve! You feel the rift's poison in the air, don't you?",
+        "The Sunstone in the old temple is the heart of this sanctuary. Without it, the demons will consume everything.",
+        "First, gather five Moonflowers — their light will shield you. They glow blue in the clearings, scattered far and wide.",
+        "Then cut down the shadow demons, and free the Forest Guardian they have caged to the west.",
+        "Take this ember of flame — press Right-Click or F to hurl a Firebolt. Go, seeker, and do not fall."
+      ],()=>{setQuest(1);toast('New objective: Gather 5 Moonflowers');});
+    } else if(quest>=1&&quest<7){
+      const msgs={1:"The Moonflowers glow blue in the clearings — five of them, far apart. Follow the beacon of light.",
+        2:"You have the flowers' shield now. Thin the demon horde — "+player.kills+" of "+killGoal+" slain.",
+        3:"The Guardian is caged to the northwest. With the demons thinned, shatter the shadow lattice and free her.",
+        4:"Light the three Ancient Braziers scattered across the Preserve to break the temple's seal.",
+        5:"A Demon Champion now stalks the temple grounds. Cut it down to press on.",
+        6:"The Demon Lord waits at the altar. End him, and the Sunstone is yours."};
+      say('Eldrin the Wizard',[msgs[quest]]);
+    } else {
+      say('Eldrin the Wizard',["You did it. The Sunstone blazes, the rift is sealed, and the Ancient World is saved. Farewell, hero of the Preserve."]);
+    }
+    return true;
+  }
+  // guardian
+  if(near(guardian)){
+    if(quest===3&&!guardian.freed){
+      guardian.freed=true;guardian.lattice.visible=false;setDone(3);
+      burst(new THREE.Vector3(guardian.x,2.5,guardian.z),0x4fd67a,40,7);
+      say('Forest Guardian',[
+        "*the cage bursts into green light* — Free! You have my thanks, brave one.",
+        "You cleared the shadow that bound me. Now I return the favor:",
+        "The temple is sealed by dark magic. Three Ancient Braziers stand scattered across the Preserve —",
+        "kindle them all, and the seal will shatter. But the demons left fierce guardians behind...",
+        "Go with the light of the forest at your back!"
+      ],()=>{toast('Light the 3 Ancient Braziers scattered across the Preserve');setQuest(4);});
+    } else if(guardian.freed){
+      say('Forest Guardian',["Light the Ancient Braziers, then cast down whatever guards the temple, hero!"]);
+    } else {
+      say('Forest Guardian',["*trapped in shadow* The demons' corruption seals my cage... slay more of them ("+player.kills+"/"+killGoal+") to break it!"]);
+    }
+    return true;
+  }
+  // shrine / sunstone
+  if(Math.hypot(px-shrine.x,pz-shrine.z)<6){
+    if(quest===7&&shrine.active&&!shrine.taken){
+      shrine.taken=true;setDone(7);shrine.group.remove(shrine.stone);
+      burst(new THREE.Vector3(shrine.x,5,shrine.z),0xffd24a,60,9);
+      say('The Ancient Shrine',[
+        "*you raise the Sunstone; warmth floods the ruined temple*",
+        "The rift collapses. Light pours back into the Verdant Preserve, and the demons dissolve into mist.",
+        "The ancient artifact is yours, and the sanctuary is saved."
+      ],win);
+    } else if(!shrine.active){
+      say('The Ancient Shrine',["The altar is cold and sealed. Awaken the Preserve's magic first."]);
+    } else if(quest<7){
+      say('The Ancient Shrine',["The Demon Lord still lives. Defeat him before the stone will yield."]);
+    }
+    return true;
+  }
+  return false;
+}
+function onBossDead(){
+  toast('The Demon Lord is slain!');
+  if(quest===6){setDone(6);setQuest(7);toast('Claim the Sunstone!');}
+}
+function onChampionDead(){
+  toast('The Demon Champion falls!');
+  if(quest===5){setDone(5);setQuest(6);
+    shrine.active=true;shrine.stone.material.emissiveIntensity=2.4;
+    makeDemon(shrine.x,shrine.z+10,'boss');
+    toast('The Demon Lord emerges at the temple!');}
+}
+
+// collect moonflowers by walking over them
+function checkPickups(){
+  if(quest!==1&&flowersGot<3){/*still allow during quest1*/}
+  const px=camHolder.position.x,pz=camHolder.position.z;
+  for(const m of moon){if(m.taken)continue;
+    if(Math.hypot(px-m.x,pz-m.z)<2.5){m.taken=true;scene.remove(m.group);flowersGot++;
+      burst(new THREE.Vector3(m.x,1.3,m.z),0x8aa0ff,20,5);
+      player.maxmp+=10;player.mp=player.maxmp;
+      if(flowersGot>=5){setDone(1);toast('All Moonflowers gathered! Now slay the demons.');setQuest(2);}
+      else{toast('Moonflower gathered ('+flowersGot+'/5)');updateBeacon();}
+    }}
+}
+// light braziers by walking up to them (quest 4)
+function checkBraziers(){
+  if(quest!==4)return;
+  const px=camHolder.position.x,pz=camHolder.position.z;
+  for(const b of braziers){if(b.lit)continue;
+    if(Math.hypot(px-b.x,pz-b.z)<4){b.lit=true;b.fire.visible=true;b.light.intensity=2;
+      burst(new THREE.Vector3(b.x,4.5,b.z),0xff9a3c,26,6);
+      const n=braziers.filter(o=>o.lit).length;
+      if(n>=3){setDone(4);setQuest(5);
+        makeDemon(shrine.x,shrine.z+14,'champion');
+        toast('The seal breaks! A Demon Champion guards the temple.');}
+      else{toast('Ancient Brazier lit ('+n+'/3)');updateBeacon();}
+    }}
+}
+
+// ============================================================= MOVEMENT + COLLISION
+const tmp=new THREE.Vector3();
+function tryMove(nx,nz){
+  const pr=1.0;
+  for(const o of obstacles){const dx=nx-o.x,dz=nz-o.z,d=Math.hypot(dx,dz),min=o.r+pr;
+    if(d<min&&d>0.0001){nx=o.x+dx/d*min;nz=o.z+dz/d*min;}}
+  const lim=WORLD*0.98;nx=Math.max(-lim,Math.min(lim,nx));nz=Math.max(-lim,Math.min(lim,nz));
+  camHolder.position.x=nx;camHolder.position.z=nz;
+}
+
+// ============================================================= LOOP
+let gameState='menu',last=performance.now(),walkPhase=0;
+const abEls={};
+function abEl(k){return abEls[k]||(abEls[k]=document.querySelector('#abilities .ab[data-k="'+k+'"] i'));}
+function setCd(k,cd,max){abEl(k).style.height=Math.max(0,Math.min(100,cd/max*100))+'%';}
+function updateHUD(){
+  $('#hpbar').style.width=Math.max(0,player.hp/player.maxhp*100)+'%';
+  $('#mpbar').style.width=Math.max(0,player.mp/player.maxmp*100)+'%';
+  $('#xpbar').style.width=Math.max(0,player.xp/player.xpNext*100)+'%';
+  $('#hptext').textContent='HP '+Math.ceil(player.hp)+' / '+player.maxhp;
+  $('#mptext').textContent='MANA '+Math.ceil(player.mp)+' / '+player.maxmp;
+  $('#xptext').textContent='Lv '+player.level+'  —  XP '+Math.floor(player.xp)+' / '+player.xpNext;
+  $('#stats').innerHTML='Level <b>'+player.level+'</b><br>Demons slain: <b>'+player.kills+'</b>'+
+    (flowersGot?'<br>Moonflowers: <b>'+flowersGot+'/5</b>':'');
+  setCd('lmb',player.atkCd,0.36);setCd('f',player.castCd,0.5);
+  setCd('q',player.novaCd,5);setCd('c',player.chainCd,6);setCd('r',player.healCd,7);
+}
+const DIRS=['N','NE','E','SE','S','SW','W','NW'];
+function updateCompass(){
+  let a=((-yaw)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+  const idx=Math.round(a/(Math.PI*2)*8)%8;$('#compass').textContent=DIRS[idx];
+}
+
+let toastT=0;const toastEl=$('#toast');
+function toast(m){toastEl.textContent=m;toastEl.style.opacity=1;toastT=2.6;}
+const hurtEl=$('#hurt');let hurtFlash=0;
+function flashHurt(){hurtFlash=1;}
+
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  requestAnimationFrame(loop);
+  if(gameState!=='play'){renderer.render(scene,camera);return;}
+
+  // dialog gate
+  if(dlgOn){if(tapped('e'))nextLine();
+    renderScene(dt);return;}
+
+  // cooldowns / regen
+  player.atkCd=Math.max(0,player.atkCd-dt);
+  player.castCd=Math.max(0,player.castCd-dt);
+  player.novaCd=Math.max(0,player.novaCd-dt);
+  player.healCd=Math.max(0,player.healCd-dt);
+  player.chainCd=Math.max(0,player.chainCd-dt);
+  player.invuln=Math.max(0,player.invuln-dt);
+  player.hurtCd=Math.max(0,player.hurtCd-dt);
+  if(player.mp<player.maxmp)player.mp=Math.min(player.maxmp,player.mp+7*dt);
+  if(player.hp<player.maxhp)player.hp=Math.min(player.maxhp,player.hp+0.6*dt);
+
+  // movement — hold SPACE to walk forward in the direction you look
+  const spd=player.speed;
+  let moving=false;
+  if(keys[' ']){moving=true;
+    const sinY=Math.sin(yaw),cosY=Math.cos(yaw);
+    // camera forward = (-sinYaw,-cosYaw)
+    const wx=-sinY, wz=-cosY;
+    tryMove(camHolder.position.x+wx*spd*dt,camHolder.position.z+wz*spd*dt);
+  }
+  // head bob
+  if(moving){walkPhase+=dt*9;camPitch.position.y=Math.sin(walkPhase)*0.09;}
+  else camPitch.position.y*=0.86;
+
+  // attacks / abilities (keyboard)
+  if(tapped('f'))tryCast();
+  if(tapped('q'))castNova();
+  if(tapped('c'))castChain();
+  if(tapped('r'))castHeal();
+  if(tapped('e'))interact();
+
+  // firebolts
+  for(const b of bolts){b.mesh.position.addScaledVector(b.dir,34*dt);b.life-=dt;
+    for(const d of demons){if(!d.alive)continue;
+      if(b.mesh.position.distanceTo(new THREE.Vector3(d.x,1.5,d.z))<1.2+d.r){
+        hurtDemon(d,b.dmg,b.dir);b.life=0;burst(b.mesh.position.clone(),0xff7a2c,14,6);break;}}
+  }
+  for(let i=bolts.length-1;i>=0;i--)if(bolts[i].life<=0){scene.remove(bolts[i].mesh);bolts.splice(i,1);}
+
+  // enemy projectiles
+  for(const b of eBolts){b.mesh.position.addScaledVector(b.dir,26*dt);b.life-=dt;
+    if(b.mesh.position.distanceTo(new THREE.Vector3(camHolder.position.x,player.eye-0.4,camHolder.position.z))<1.4){
+      hurtPlayer(b.dmg);b.life=0;}}
+  for(let i=eBolts.length-1;i>=0;i--)if(eBolts[i].life<=0){scene.remove(eBolts[i].mesh);eBolts.splice(i,1);}
+
+  // frost rings
+  for(const r of rings){r.life-=dt;const p=1-r.life/r.max;
+    const s=0.6+p*r.maxR;r.mesh.scale.set(s,s,s);r.mesh.material.opacity=0.85*(1-p);}
+  for(let i=rings.length-1;i>=0;i--)if(rings[i].life<=0){scene.remove(rings[i].mesh);rings.splice(i,1);}
+  // lightning arcs
+  for(const z of zaps){z.life-=dt;z.line.material.opacity=Math.max(0,z.life/0.2);}
+  for(let i=zaps.length-1;i>=0;i--)if(zaps[i].life<=0){scene.remove(zaps[i].line);zaps.splice(i,1);}
+
+  // loot orbs — pickup
+  for(const o of orbs){
+    if(Math.hypot(camHolder.position.x-o.x,camHolder.position.z-o.z)<2.6){
+      if(o.kind==='hp'){player.hp=Math.min(player.maxhp,player.hp+28);}
+      else{player.mp=Math.min(player.maxmp,player.mp+34);}
+      burst(o.mesh.position.clone(),o.kind==='hp'?0xff6a7a:0x6fc0ff,14,4);o.dead=true;
+    }}
+  for(let i=orbs.length-1;i>=0;i--)if(orbs[i].dead){scene.remove(orbs[i].mesh);orbs.splice(i,1);}
+
+  // particles
+  for(const p of particles){p.mesh.position.addScaledVector(p.v,dt);p.v.y-=8*dt;p.life-=dt;
+    p.mesh.material.opacity=Math.max(0,p.life/0.6);p.mesh.scale.setScalar(Math.max(0.1,p.life));}
+  for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0){scene.remove(particles[i].mesh);particles.splice(i,1);}
+
+  // demons AI
+  const px=camHolder.position.x,pz=camHolder.position.z;
+  let anyAlive=false;
+  for(const d of demons){if(!d.alive)continue;anyAlive=true;
+    d.atkCd=Math.max(0,d.atkCd-dt);d.hurtT=Math.max(0,d.hurtT-dt);d.slow=Math.max(0,d.slow-dt);d.wob+=dt*4;
+    const dx=px-d.x,dz=pz-d.z,dd=Math.hypot(dx,dz)||0.001;
+    const nx=dx/dd,nz=dz/dd,eff=d.speed*(d.slow>0?0.45:1);
+    // decide movement: ranged shades kite, others chase
+    let move=0;
+    if(d.ranged){move=dd>17?1:(dd<11?-1:0);}
+    else{move=dd<160?1:0;}
+    if(move!==0){
+      let mx=d.x+nx*eff*dt*move,mz=d.z+nz*eff*dt*move;
+      for(const o of obstacles){const ox=mx-o.x,oz=mz-o.z,od=Math.hypot(ox,oz),mn=o.r+d.r;
+        if(od<mn&&od>0.001){mx=o.x+ox/od*mn;mz=o.z+oz/od*mn;}}
+      d.x=mx;d.z=mz;
+    }
+    d.group.rotation.y=Math.atan2(nx,nz);
+    d.group.position.set(d.x,Math.abs(Math.sin(d.wob))*0.2*(d.type==='imp'?1.6:1),d.z);
+    d.bodyMat.emissiveIntensity=d.hurtT>0?3:(d.slow>0?1.4:0.6);
+    // attack
+    if(d.ranged){
+      if(dd<40&&dd>6&&d.atkCd===0){d.atkCd=d.atkCdMax;fireEnemyBolt(d);}
+    } else {
+      if(dd<d.atkRange+d.r&&d.atkCd===0){d.atkCd=d.atkCdMax;hurtPlayer(d.dmg);}
+    }
+    // boss enrages at half health and summons a mixed pack (once)
+    if(d.boss&&!d.summoned&&d.hp<=d.max*0.5){d.summoned=true;
+      const kinds=['imp','imp','grunt','shade'];
+      for(let k=0;k<4;k++){const a=k/4*Math.PI*2;
+        makeDemon(d.x+Math.cos(a)*9,d.z+Math.sin(a)*9,kinds[k]);}
+      toast('The Demon Lord howls and summons a pack of demons!');}
+  }
+  // spawning: big varied horde during the slaying stage, light roaming danger after
+  const roamAlive=demons.filter(d=>d.alive&&!d.boss&&!d.champion).length;
+  if(quest===2){
+    if(player.kills+roamAlive<killGoal&&roamAlive<11&&Math.random()<dt*2.4)spawnWave();
+  } else if(quest>=3&&quest<6){
+    if(roamAlive<6&&Math.random()<dt*0.6)spawnWave();
+  }
+
+  // guardian can be freed once demons cleared → advance quest 2→3
+  if(quest===2&&player.kills>=killGoal){setQuest(3);toast('Now free the Forest Guardian to the northwest!');}
+
+  // pickups
+  checkPickups();
+  checkBraziers();
+  // interact prompt
+  updatePrompt();
+
+  updateHUD();updateCompass();
+  renderScene(dt);
+}
+
+function renderScene(dt){
+  // animate ambient stuff
+  const t=performance.now()/1000;
+  wizard.orb.position.y=4.2+Math.sin(t*2)*0.15;
+  if(!guardian.freed){guardian.cre.rotation.y+=dt*0.6;guardian.cre.position.y=2.5+Math.sin(t*2)*0.15;
+    guardian.lattice.rotation.y+=dt*0.4;}
+  else{guardian.cre.position.y=3.4+Math.sin(t*3)*0.3;guardian.cre.rotation.y+=dt*1.2;}
+  moon.forEach(m=>{if(!m.taken){m.bloom.rotation.y+=dt;m.bloom.position.y=1.3+Math.sin(t*2+m.x)*0.12;}});
+  if(shrine.stone&&!shrine.taken){shrine.stone.rotation.y+=dt*0.8;
+    shrine.stone.position.y=4.4+Math.sin(t*1.5)*0.2;
+    if(shrine.active)shrine.light.intensity=2.2+Math.sin(t*3)*0.8;}
+  braziers.forEach(b=>{if(b.lit){b.fire.scale.set(1+Math.sin(t*13+b.x)*0.15,1+Math.sin(t*10+b.z)*0.25,1);
+    b.light.intensity=1.7+Math.sin(t*16+b.x)*0.6;}});
+  orbs.forEach(o=>{o.mesh.rotation.y+=dt*2;o.mesh.position.y=1.2+Math.sin(t*3+o.x)*0.25;});
+  if(beacon.visible){beacon.children[1].rotation.z+=dt;}
+  // fireflies drift
+  const arr=flyGeo.attributes.position.array;
+  for(let i=0;i<flyN;i++){arr[i*3+1]=1+Math.sin(t*0.7+flyPhase[i])*0.6+ ( (i%7)+1)*0.4;
+    arr[i*3]+=Math.sin(t*0.3+flyPhase[i])*0.02;}
+  flyGeo.attributes.position.needsUpdate=true;
+
+  // view model swing
+  if(swingT>0){swingT=Math.max(0,swingT-dt*4);
+    const p=1-swingT;
+    if(swingType===0){ // slash
+      const s=Math.sin(p*Math.PI);
+      sword.rotation.z=0.15 - s*1.6;sword.rotation.x=-s*0.7;sword.position.x=0.42-s*0.3;
+    } else { // cast thrust
+      const s=Math.sin(p*Math.PI);
+      sword.position.z=-0.9 - s*0.4;sword.rotation.x=0.2 - s*0.5;
+    }
+  } else {sword.rotation.set(0.2,-0.3,0.15);sword.position.set(0.42,-0.42,-0.9);}
+
+  // hurt vignette fade
+  if(hurtFlash>0){hurtFlash=Math.max(0,hurtFlash-dt*3);hurtEl.style.opacity=hurtFlash*0.9;}
+  // toast fade
+  if(toastT>0){toastT-=dt;if(toastT<=0)toastEl.style.opacity=0;}
+  // sun follows player so shadows stay crisp
+  sun.position.set(camHolder.position.x+80,140,camHolder.position.z+40);
+  sun.target.position.set(camHolder.position.x,0,camHolder.position.z);
+
+  renderer.render(scene,camera);
+}
+
+function updatePrompt(){
+  const px=camHolder.position.x,pz=camHolder.position.z;
+  const p=$('#prompt');let label='';
+  if(Math.hypot(px-wizard.x,pz-wizard.z)<6.5)label='[E] Talk to Eldrin';
+  else if(Math.hypot(px-guardian.x,pz-guardian.z)<6.5)
+    label=guardian.freed?'[E] Talk to the Guardian':(player.kills>=killGoal?'[E] Free the Guardian':'[E] Inspect the Cage');
+  else if(Math.hypot(px-shrine.x,pz-shrine.z)<6)
+    label=(quest===7&&!shrine.taken)?'[E] Take the Sunstone':'[E] Inspect the Shrine';
+  if(label&&!dlgOn){p.textContent=label;p.classList.remove('hide');}else p.classList.add('hide');
+}
+
+// ============================================================= STATES
+function startGame(){
+  overlay.classList.add('hide');$('#hud').classList.remove('hide');
+  gameState='play';setQuest(0);updateHUD();last=performance.now();
+  canvas.requestPointerLock();
+  setTimeout(()=>toast('Find the wizard by the blue beacon of light'),400);
+}
+$('#startBtn').onclick=startGame;
+
+function gameOver(){
+  gameState='over';document.exitPointerLock();
+  showEnd('YOU HAVE FALLEN','The shadows of the Preserve overcame you — but the Ancient World grants second chances.','RISE AGAIN');
+}
+function win(){
+  gameState='won';document.exitPointerLock();
+  showEnd('THE SUNSTONE IS YOURS','Light floods the Verdant Preserve. The rift is sealed, the demons undone, and the ancient artifact rests in your hands. The sanctuary — and the Ancient World — endure because of you.','PLAY AGAIN');
+}
+function showEnd(title,body,btn){
+  overlay.innerHTML='<h2>'+title+'</h2><p>'+body+'</p>'+
+    '<p style="margin-top:8px">Demons slain: <b style="color:var(--gold)">'+player.kills+'</b>'+
+    ' &nbsp;·&nbsp; Moonflowers: <b style="color:var(--gold)">'+flowersGot+'/3</b></p>'+
+    '<button class="btn" id="againBtn">'+btn+'</button>';
+  overlay.classList.remove('hide');$('#hud').classList.add('hide');
+  $('#againBtn').onclick=()=>location.reload();
+}
+
+// ============================================================= RESIZE
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+renderer.setSize(innerWidth,innerHeight);
+
+// ============================================================= UTIL
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
