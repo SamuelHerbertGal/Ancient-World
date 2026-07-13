@@ -27,6 +27,40 @@
   .ab b{display:block;margin-top:6px;font-size:13px;color:var(--gold);font-weight:800;text-shadow:0 1px 2px #000}
   .ab span{font-size:9.5px;opacity:.8;letter-spacing:.3px}
   .ab i{position:absolute;left:0;bottom:0;width:100%;height:0%;background:#000a;border-top:1px solid #ffffff33}
+  .ab.locked{opacity:.38;filter:grayscale(.65)}
+  .ab.locked:after{content:'🔒';position:absolute;right:3px;top:2px;font-size:9px;opacity:.8}
+  /* companion command bar */
+  #cmdbar{position:absolute;left:20px;bottom:20px;pointer-events:auto}
+  #cmdbar .lbl{font-size:11px;letter-spacing:2px;color:var(--gold);opacity:.9;text-shadow:0 1px 2px #000;margin-bottom:5px}
+  #cmdbar .row{display:flex;gap:8px}
+  .cmd{position:relative;min-width:92px;padding:7px 10px;background:#0b0814cc;border:1px solid #ffffff30;
+    border-radius:8px;cursor:pointer;text-align:center;box-shadow:0 3px 12px #0007;transition:.15s}
+  .cmd:hover{border-color:#ffffff80}
+  .cmd.on{border-color:var(--gold);background:#241a08d0;box-shadow:0 0 14px #f5c54277}
+  .cmd b{display:block;font-size:12px;color:var(--gold);font-weight:800;text-shadow:0 1px 2px #000}
+  .cmd span{font-size:10px;opacity:.85}
+  #cmdbar .hint{margin-top:6px;font-size:10px;opacity:.6}
+  #cmdbar .who2{display:flex;gap:14px;margin-top:7px;font-size:11px}
+  #cmdbar .who2 .wa{opacity:.55;border-left:2px solid transparent;padding-left:5px}
+  #cmdbar .who2 .wa.sel{opacity:1;color:var(--gold);border-left-color:var(--gold)}
+  #cmdbar .who2 .wa b{color:#fff}
+  #cmdbar .who2 .wa.sel b{color:var(--gold)}
+  /* typed command line */
+  #cmdline{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:min(620px,90vw);
+    display:flex;align-items:center;gap:10px;background:#0b0814f4;border:1px solid var(--gold);
+    border-radius:10px;padding:10px 14px;box-shadow:0 10px 40px #000c;pointer-events:auto}
+  #cmdline .pfx{color:var(--gold);font-weight:800;font-size:14px;white-space:nowrap}
+  #cmdtext{flex:1;background:#00000055;border:1px solid #ffffff33;border-radius:6px;color:#fff;
+    font-size:15px;padding:8px 11px;outline:none;font-family:inherit}
+  #cmdtext::placeholder{color:#ffffff66}
+  /* boss health bar */
+  #bossbar{position:absolute;top:72px;left:50%;transform:translateX(-50%);width:min(580px,82vw);text-align:center}
+  #bossbar .bn{color:#ff7a6a;font-weight:800;letter-spacing:2.5px;font-size:14px;text-shadow:0 1px 4px #000;margin-bottom:4px}
+  #bossbar .bhp{height:15px;background:#00000088;border:1px solid #ffffff40;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px #000a}
+  #bossbar .bhp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#7a0f0f,#ff4a4a);transition:width .12s}
+  /* grand-finale light flash */
+  #finale{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;
+    background:radial-gradient(circle at 50% 44%, #fff8e0f0 0%, #ffd24a99 32%, #ffb02033 55%, transparent 72%)}
   #cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px;opacity:.8}
   #cross:before,#cross:after{content:'';position:absolute;background:#fff;box-shadow:0 0 3px #000}
   #cross:before{left:50%;top:0;width:2px;height:100%;transform:translateX(-50%)}
@@ -105,18 +139,48 @@
     <div class="ab" data-k="q"><b>Q</b><span>Frost Nova</span><i></i></div>
     <div class="ab" data-k="c"><b>C</b><span>Chain</span><i></i></div>
     <div class="ab" data-k="r"><b>R</b><span>Heal</span><i></i></div>
+    <div class="ab locked" data-k="shift"><b>⇧</b><span>Blink</span><i></i></div>
+    <div class="ab locked" data-k="v"><b>V</b><span>Meteor</span><i></i></div>
   </div>
   <div id="stats"></div>
+  <div id="cmdbar">
+    <div class="lbl">◈ COMMANDING: <span id="selname">Both</span>
+      &nbsp;<span style="opacity:.55">[1] Lysander · [2] Damon · [3] Both</span></div>
+    <div class="row">
+      <div class="cmd on" data-o="follow"><b>H</b><span>Regroup</span></div>
+      <div class="cmd" data-o="gather"><b>G</b><span>Help Quest</span></div>
+      <div class="cmd" data-o="attack"><b>T</b><span>Attack</span></div>
+    </div>
+    <div class="who2">
+      <span class="wa sel" data-a="0">Lysander: <b>Regroup</b></span>
+      <span class="wa sel" data-a="1">Damon: <b>Regroup</b></span>
+    </div>
+    <div class="hint">↵ Enter — type an order, e.g. "Lysander attack"</div>
+  </div>
+  <div id="bossbar" class="hide"><div class="bn"></div><div class="bhp"><i></i></div></div>
+  <div id="finale" class="hide"></div>
+  <div id="cmdline" class="hide">
+    <span class="pfx">Speak ▸</span>
+    <input id="cmdtext" type="text" autocomplete="off" spellcheck="false"
+      placeholder='e.g. "Lysander attack", "Damon help", "everyone follow me"'>
+  </div>
   <div id="quest">
     <h3>◈ THE QUEST FOR THE SUNSTONE</h3>
     <div class="obj active" data-q="0">Find and speak with Eldrin the Wizard</div>
     <div class="obj" data-q="1">Gather 5 glowing Moonflowers</div>
-    <div class="obj" data-q="2">Slay 15 shadow demons</div>
+    <div class="obj" data-q="2">Slay 15 mythic beasts</div>
     <div class="obj" data-q="3">Free the Forest Guardian</div>
     <div class="obj" data-q="4">Light the 3 Ancient Braziers</div>
-    <div class="obj" data-q="5">Defeat the Demon Champion</div>
-    <div class="obj" data-q="6">Defeat the Demon Lord at the temple</div>
-    <div class="obj" data-q="7">Claim the Sunstone</div>
+    <div class="obj" data-q="5">Slay the Minotaur</div>
+    <div class="obj" data-q="6">Consult Pythia the Oracle</div>
+    <div class="obj" data-q="7">Recover the 3 Golden Relics</div>
+    <div class="obj" data-q="8">Slay Medusa, the Gorgon Queen</div>
+    <div class="obj" data-q="9">Seek Circe the Enchantress</div>
+    <div class="obj" data-q="10">Defeat Cerberus, Hound of Hades</div>
+    <div class="obj" data-q="11">Claim the Sunstone</div>
+    <div class="obj" data-q="12">Slay 12 awakened remnants</div>
+    <div class="obj" data-q="13">Seal the 3 Rift Obelisks</div>
+    <div class="obj" data-q="14">Defeat Polyphemus, the Titan</div>
   </div>
   <div id="toast"></div>
   <div id="prompt" class="hide"></div>
@@ -128,15 +192,18 @@
 
 <div id="overlay">
   <h1>THE ANCIENT WORLD</h1>
-  <p>You step into the <b>Verdant Preserve</b> — an ancient magical sanctuary now torn by a
-  demonic rift. Hidden deep within its ruined temple lies the legendary <b>Sunstone</b>.
-  Seek the wizard, gather the moonflowers, cut down the shadow demons, free the Forest Guardian,
-  kindle the ancient braziers, and cast down the Demon Champion and the Demon Lord to claim the artifact.</p>
+  <p>You step into the <b>Verdant Preserve</b> — an ancient sanctuary now overrun by monsters of
+  Greek legend: <b>harpies, cyclopes, gorgons, a minotaur</b>, and worse. Deep in its ruined temple
+  lies the legendary <b>Sunstone</b>. Seek out three mages — <b>Eldrin</b>, the oracle <b>Pythia</b>,
+  and the enchantress <b>Circe</b> — gather the moonflowers and golden relics, and cast down
+  <b>Medusa the Gorgon Queen</b> and <b>Cerberus, Hound of Hades</b> to claim the artifact.</p>
   <div class="keys">
     <b>Space</b> move forward (where you look) &nbsp;·&nbsp; <b>Mouse</b> look<br>
     <b>Left-Click</b> Sword &nbsp;·&nbsp; <b>Right-Click / F</b> Firebolt &nbsp;·&nbsp; <b>Q</b> Frost Nova<br>
     <b>C</b> Chain Lightning &nbsp;·&nbsp; <b>R</b> Heal &nbsp;·&nbsp; <b>E</b> talk / interact<br>
-    <span style="opacity:.7">Slay demons to gain XP and <b>level up</b>. Enemies drop red (health) and blue (mana) orbs.</span>
+    <b>Shift</b> Blink <span style="opacity:.6">(Lv2)</span> &nbsp;·&nbsp; <b>V</b> Meteor Storm <span style="opacity:.6">(Lv4)</span> &nbsp;— <span style="opacity:.7">new powers unlock as you level up</span><br>
+    <b>Companions</b> — pick with <b>1</b> Lysander / <b>2</b> Damon / <b>3</b> Both, then order <b>G</b> help · <b>T</b> attack · <b>H</b> regroup <span style="opacity:.65">(split them up!)</span><br>
+    <span style="opacity:.7">Slay monsters to gain XP and <b>level up</b>. Enemies drop red (health) and blue (mana) orbs.</span>
   </div>
   <div id="startArea"><button class="btn" id="startBtn">ENTER THE PRESERVE</button>
     <p style="margin-top:10px;font-size:12px;opacity:.6">Click to lock the mouse. Press Esc to release.</p></div>
@@ -248,7 +315,8 @@ function makeTree(x,z,s){
 // scatter trees, keeping clearings around key spots
 const KEY=[[0,40,16],[130,-190,20],[-260,150,20],[0,-380,40],[220,200,16],
   [-330,-120,16],[300,-80,16],[-120,320,16],
-  [250,60,14],[-200,-250,14],[60,250,14]]; //[x,z,clearR]
+  [250,60,14],[-200,-250,14],[60,250,14],
+  [360,-300,15],[-380,300,15],[400,120,12],[-420,40,12],[120,420,12],[-300,-320,18]]; //[x,z,clearR]
 function inClearing(x,z){for(const k of KEY)if(Math.hypot(x-k[0],z-k[1])<k[2])return true;return false;}
 const rng=mulberry(1337);
 for(let i=0;i<720;i++){
@@ -300,25 +368,38 @@ function makeBeacon(x,z,color){
 }
 
 // ============================================================= NPCs & OBJECTS
-// --- Wizard
-function makeWizard(x,z){
+// --- Wizard (robeCol / hatCol / orbCol customizable)
+function makeWizard(x,z,robeCol,hatCol,orbCol){
+  robeCol=robeCol||0x5a3fa0;hatCol=hatCol||0x40277a;orbCol=orbCol||0x6fc0ff;
   const g=new THREE.Group();
   const robe=new THREE.Mesh(new THREE.ConeGeometry(1.5,3.4,10),
-    new THREE.MeshStandardMaterial({color:0x5a3fa0,roughness:.8}));robe.position.y=1.7;robe.castShadow=true;g.add(robe);
+    new THREE.MeshStandardMaterial({color:robeCol,roughness:.8}));robe.position.y=1.7;robe.castShadow=true;g.add(robe);
   const head=new THREE.Mesh(new THREE.SphereGeometry(0.55,16,16),
     new THREE.MeshStandardMaterial({color:0xe8c39a,roughness:.7}));head.position.y=3.6;g.add(head);
   const beard=new THREE.Mesh(new THREE.ConeGeometry(0.5,1.1,8),
     new THREE.MeshStandardMaterial({color:0xf0f0f4,roughness:.9}));beard.position.set(0,3.2,0.35);beard.rotation.x=0.2;g.add(beard);
   const hat=new THREE.Mesh(new THREE.ConeGeometry(0.9,1.8,10),
-    new THREE.MeshStandardMaterial({color:0x40277a,roughness:.8}));hat.position.y=4.6;g.add(hat);
+    new THREE.MeshStandardMaterial({color:hatCol,roughness:.8}));hat.position.y=4.6;g.add(hat);
   const staff=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09,4,6),
     new THREE.MeshStandardMaterial({color:0x6a4a2a,roughness:.9}));staff.position.set(1.3,2,0);g.add(staff);
   const orb=new THREE.Mesh(new THREE.SphereGeometry(0.4,16,16),
-    new THREE.MeshStandardMaterial({color:0x6fc0ff,emissive:0x3a90e0,emissiveIntensity:2,roughness:.3}));
+    new THREE.MeshStandardMaterial({color:orbCol,emissive:orbCol,emissiveIntensity:2,roughness:.3}));
   orb.position.set(1.3,4.2,0);g.add(orb);
-  const oL=new THREE.PointLight(0x6fc0ff,1.2,14);oL.position.copy(orb.position);g.add(oL);
+  const oL=new THREE.PointLight(orbCol,1.2,14);oL.position.copy(orb.position);g.add(oL);
   g.position.set(x,0,z);scene.add(g);addObstacle(x,z,1.4);
   return {group:g,orb:orb,x,z};
+}
+// --- Golden Relic (collectible, quest 7)
+function makeRelic(x,z){
+  const g=new THREE.Group();
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.5,0.4,8),
+    new THREE.MeshStandardMaterial({color:0x6a5a2a,roughness:.7}));base.position.y=0.5;g.add(base);
+  const relic=new THREE.Mesh(new THREE.TorusKnotGeometry(0.4,0.14,64,8),
+    new THREE.MeshStandardMaterial({color:0xf5d24a,emissive:0xffb020,emissiveIntensity:1.8,metalness:.7,roughness:.25}));
+  relic.position.y=1.6;g.add(relic);
+  const l=new THREE.PointLight(0xffc040,1.1,10);l.position.y=1.7;g.add(l);
+  g.position.set(x,0,z);scene.add(g);
+  return {group:g,relic:relic,x,z,taken:false};
 }
 // --- Forest Guardian (caged magical creature)
 function makeGuardian(x,z){
@@ -387,10 +468,16 @@ function makeTemple(x,z){
   return {group:g,stone:stone,light:sL,x,z,active:false,taken:false};
 }
 
-const wizard=makeWizard(0,44);
+const wizard=makeWizard(0,44);                                   // Eldrin (blue)
+const pythia=makeWizard(360,-300,0xe8d8a0,0xcaa23a,0xfff0a0);    // Pythia the Oracle (gold)
+const circe=makeWizard(-380,300,0x3f7a4a,0x24503a,0x8affc0);     // Circe the Enchantress (green)
 const guardian=makeGuardian(-260,150);
 const moon=[makeMoonflower(130,-190),makeMoonflower(220,200),makeMoonflower(-120,320),
   makeMoonflower(-330,-120),makeMoonflower(300,-80)];
+const relics=[makeRelic(400,120),makeRelic(-420,40),makeRelic(120,420)];
+const gorgonArena={x:-300,z:-320};                              // where Medusa is summoned
+const titanArena={x:0,z:150};                                  // where Polyphemus is dragged in (Act III)
+const obelisks=[];let remnantsSlain=0;const remnantGoal=12;    // Act III state
 const shrine=makeTemple(0,-380);
 
 // --- Ancient Braziers (light all 3 to unseal the temple)
@@ -412,60 +499,440 @@ const braziers=[makeBrazier(250,60),makeBrazier(-200,-250),makeBrazier(60,250)];
 
 const beacon=makeBeacon(0,44,0x6fc0ff);   // starts pointing at wizard
 
-// ============================================================= DEMONS
+// ============================================================= COMPANIONS (Greek hoplites)
+function makeHoplite(x,z,crestCol,name){
+  const g=new THREE.Group();
+  // richer, shaded materials
+  const bronze =new THREE.MeshStandardMaterial({color:0xc8912f,metalness:.85,roughness:.34,emissive:0x2a1c04,emissiveIntensity:.3});
+  const bronzeD=new THREE.MeshStandardMaterial({color:0x8f6a1e,metalness:.85,roughness:.45});
+  const bronzeL=new THREE.MeshStandardMaterial({color:0xe6b94a,metalness:.9, roughness:.24,emissive:0x3a2a06,emissiveIntensity:.35});
+  const skin   =new THREE.MeshStandardMaterial({color:0xce9a6e,roughness:.62});
+  const skinD  =new THREE.MeshStandardMaterial({color:0xb5835a,roughness:.62});
+  const tunic  =new THREE.MeshStandardMaterial({color:0x9a2b26,roughness:.85});
+  const crest  =new THREE.MeshStandardMaterial({color:crestCol,roughness:.55});
+  const leather=new THREE.MeshStandardMaterial({color:0x6a4326,roughness:.82});
+  const wood   =new THREE.MeshStandardMaterial({color:0x5a3a1e,roughness:.9});
+  const dark   =new THREE.MeshBasicMaterial({color:0x110a06});
+  const mk=(geo,mat,px,py,pz)=>{const m=new THREE.Mesh(geo,mat);m.position.set(px||0,py||0,pz||0);m.castShadow=true;return m;};
+
+  // ---------- LEGS (thigh + knee + shin + greave + sandal) ----------
+  for(const sx of [-1,1]){
+    const leg=new THREE.Group();leg.position.set(sx*0.26,0,0);
+    leg.add(mk(new THREE.CylinderGeometry(0.2,0.15,0.95,12),skin,0,1.35,0));   // thigh
+    leg.add(mk(new THREE.SphereGeometry(0.16,12,10),skin,0,0.9,0));            // knee
+    leg.add(mk(new THREE.CylinderGeometry(0.15,0.11,0.9,12),skinD,0,0.5,0));   // shin
+    const gr=mk(new THREE.CylinderGeometry(0.17,0.12,0.78,14,1,true),bronze,0,0.54,0.02); // greave
+    leg.add(gr);
+    leg.add(mk(new THREE.BoxGeometry(0.22,0.1,0.5),leather,0,0.05,0.11));      // sandal
+    g.add(leg);
+  }
+  // ---------- HIPS + PTERUGES (leather strips) ----------
+  g.add(mk(new THREE.CylinderGeometry(0.4,0.46,0.5,14),tunic,0,1.85,0));
+  for(let i=0;i<11;i++){const a=(i/11)*Math.PI*2;
+    const strip=mk(new THREE.BoxGeometry(0.15,0.44,0.06),leather,Math.cos(a)*0.42,1.55,Math.sin(a)*0.42);
+    strip.rotation.y=-a;g.add(strip);}
+  // ---------- MUSCLED CUIRASS TORSO ----------
+  const torso=mk(new THREE.CylinderGeometry(0.42,0.5,1.15,16),bronze,0,2.55,0);torso.scale.set(1,1,0.74);g.add(torso);
+  for(const sx of [-1,1])g.add(mk(new THREE.SphereGeometry(0.2,14,12),bronzeL,sx*0.18,2.72,0.26));  // pectorals
+  const belly=mk(new THREE.SphereGeometry(0.33,14,12),bronzeD,0,2.18,0.2);belly.scale.set(1,0.8,0.6);g.add(belly);
+  g.add(mk(new THREE.CylinderGeometry(0.5,0.44,0.2,16),bronzeL,0,3.12,0));      // shoulder yoke
+  g.add(mk(new THREE.CylinderGeometry(0.44,0.42,1.1,16),bronzeD,0,2.55,-0.02).clone()); // back plate (slightly behind)
+  // ---------- ARMS (pauldron + upper + elbow + forearm + hand) ----------
+  function arm(sx){
+    const sh=new THREE.Group();sh.position.set(sx*0.52,3.02,0);
+    sh.add(mk(new THREE.SphereGeometry(0.22,14,12),bronze,0,0.04,0));           // pauldron
+    sh.add(mk(new THREE.CylinderGeometry(0.13,0.11,0.62,12),skin,0,-0.36,0));   // upper arm
+    sh.add(mk(new THREE.SphereGeometry(0.12,10,10),skin,0,-0.68,0));            // elbow
+    sh.add(mk(new THREE.CylinderGeometry(0.11,0.09,0.6,12),skinD,0,-1.0,0));    // forearm
+    sh.add(mk(new THREE.SphereGeometry(0.11,10,10),skinD,0,-1.32,0));           // hand
+    g.add(sh);return sh;
+  }
+  arm(-1);arm(1);
+  // ---------- NECK + HEAD ----------
+  g.add(mk(new THREE.CylinderGeometry(0.13,0.16,0.22,12),skin,0,3.32,0));
+  const head=mk(new THREE.SphereGeometry(0.28,18,16),skin,0,3.62,0);head.scale.set(1,1.12,1.04);g.add(head);
+  // ---------- CORINTHIAN HELMET ----------
+  const helm=new THREE.Group();helm.position.set(0,3.66,0);g.add(helm);
+  helm.add(mk(new THREE.SphereGeometry(0.31,20,16,0,Math.PI*2,0,Math.PI*0.6),bronze,0,0,0));      // dome
+  helm.add(mk(new THREE.SphereGeometry(0.3,18,14,0,Math.PI*2,Math.PI*0.42,Math.PI*0.4),bronze,0,-0.03,-0.02)); // back skull
+  for(const sx of [-1,1])helm.add(mk(new THREE.BoxGeometry(0.1,0.5,0.17),bronze,sx*0.21,-0.2,0.14)); // cheek guards
+  helm.add(mk(new THREE.TorusGeometry(0.29,0.035,8,22,Math.PI),bronzeL,0,0.03,0.05));               // brow band
+  helm.add(mk(new THREE.BoxGeometry(0.07,0.44,0.09),bronze,0,-0.22,0.27));                          // nasal
+  for(const sx of [-1,1])helm.add(mk(new THREE.BoxGeometry(0.12,0.07,0.05),dark,sx*0.13,-0.13,0.29)); // eye slots
+  // horsehair crest (front-to-back arched plume + tail)
+  const crestGrp=new THREE.Group();crestGrp.position.set(0,0.33,0);helm.add(crestGrp);
+  crestGrp.add(mk(new THREE.BoxGeometry(0.05,0.09,0.72),bronzeD,0,-0.04,0));   // holder ridge
+  for(let i=0;i<15;i++){const p=i/14;
+    crestGrp.add(mk(new THREE.BoxGeometry(0.09,0.24,0.055),crest,0,0.08+Math.sin(p*Math.PI)*0.17,0.34-p*0.7));}
+  for(let i=0;i<6;i++){const p=i/5;                                          // flowing tail down the back
+    crestGrp.add(mk(new THREE.BoxGeometry(0.08,0.17-p*0.02,0.055),crest,0,0.02-p*0.3,-0.4-p*0.11));}
+
+  // ---------- ROUND SHIELD (aspis) on left arm ----------
+  const shield=new THREE.Group();shield.position.set(-0.66,2.55,0.34);shield.rotation.y=0.18;g.add(shield);
+  const face=mk(new THREE.CylinderGeometry(0.92,0.92,0.1,30),bronze);face.rotation.z=Math.PI/2;shield.add(face);
+  const dish=mk(new THREE.SphereGeometry(0.9,26,16,0,Math.PI*2,0,Math.PI*0.3),bronzeD,0.05,0,0);dish.rotation.z=-Math.PI/2;shield.add(dish);
+  const rim=mk(new THREE.TorusGeometry(0.9,0.07,12,34),bronzeL);rim.rotation.y=Math.PI/2;shield.add(rim);
+  const emblem=mk(new THREE.CylinderGeometry(0.52,0.52,0.02,26),new THREE.MeshStandardMaterial({color:crestCol,roughness:.7}));
+  emblem.rotation.z=Math.PI/2;emblem.position.x=-0.06;shield.add(emblem);
+  shield.add(mk(new THREE.SphereGeometry(0.15,12,12),bronzeL,-0.1,0,0));       // central boss
+  // ---------- SPEAR (dory): shaft + leaf blade + sauroter ----------
+  const spear=new THREE.Group();
+  spear.add(mk(new THREE.CylinderGeometry(0.05,0.05,4.4,10),wood,0,0,0));
+  spear.add(mk(new THREE.ConeGeometry(0.11,0.55,10),bronzeL,0,2.5,0));         // leaf blade
+  spear.add(mk(new THREE.CylinderGeometry(0.03,0.055,0.18,8),bronzeD,0,2.22,0));// socket
+  const butt=mk(new THREE.ConeGeometry(0.08,0.34,8),bronzeD,0,-2.3,0);butt.rotation.x=Math.PI;spear.add(butt);
+  spear.position.set(0.68,2.0,0.16);spear.rotation.x=0.05;g.add(spear);
+  // ---------- torch (drawn only to light the ancient braziers) ----------
+  const torch=new THREE.Group();torch.visible=false;
+  torch.add(mk(new THREE.CylinderGeometry(0.045,0.045,0.85,8),wood,0,0,0));
+  const flame=new THREE.Mesh(new THREE.ConeGeometry(0.17,0.5,10),
+    new THREE.MeshBasicMaterial({color:0xffb040,transparent:true,opacity:.92,blending:THREE.AdditiveBlending,depthWrite:false}));
+  flame.position.y=0.62;torch.add(flame);
+  const torchL=new THREE.PointLight(0xff9a40,1.3,11);torchL.position.y=0.66;torch.add(torchL);
+  torch.position.set(0.68,3.0,0.4);torch.rotation.x=-0.2;g.add(torch);
+  g.position.set(x,0,z);scene.add(g);
+  // floating health bar (billboarded toward the camera each frame)
+  const hpbar=new THREE.Group();
+  hpbar.add(new THREE.Mesh(new THREE.PlaneGeometry(1.5,0.2),
+    new THREE.MeshBasicMaterial({color:0x200808,transparent:true,opacity:.65,depthTest:false})));
+  const hpfg=new THREE.Mesh(new THREE.PlaneGeometry(1.5,0.2),
+    new THREE.MeshBasicMaterial({color:0x36d05a,depthTest:false}));
+  hpfg.position.z=0.01;hpbar.add(hpfg);
+  hpbar.renderOrder=999;scene.add(hpbar);
+  return {group:g,spear:spear,flame:flame,torch:torch,hpbar:hpbar,hpfg:hpfg,name:name,x:x,z:z,r:0.9,order:'follow',
+    hp:120,maxhp:120,dmg:20,spd:66,atkCd:0,wob:Math.random()*6,swing:0,down:false,reviveT:0};
+}
+const allies=[
+  makeHoplite(-4,58,0xd23b2e,'Lysander'),   // red crest — ahead-left, in view
+  makeHoplite(4,58,0x2e6bd2,'Damon')        // blue crest — ahead-right, in view
+];
+// each companion carries its own order: follow | gather | attack
+let cmdSel=[0,1];                                   // which companion(s) the keys/buttons command
+const ORDER_LBL={follow:'Regroup',gather:'Help',attack:'Attack'};
+function selNames(){return cmdSel.length>1?'Both':allies[cmdSel[0]].name;}
+function updateCmdUI(){
+  const sel=cmdSel.map(i=>allies[i]);
+  document.querySelectorAll('#cmdbar .cmd').forEach(el=>{
+    el.classList.toggle('on',sel.every(a=>a.order===el.dataset.o));});
+  const sn=document.getElementById('selname');if(sn)sn.textContent=selNames();
+  document.querySelectorAll('#cmdbar .who2 .wa').forEach(el=>{
+    const i=+el.dataset.a,a=allies[i];
+    el.querySelector('b').textContent=ORDER_LBL[a.order]||a.order;
+    el.classList.toggle('sel',cmdSel.indexOf(i)>=0);});
+}
+function setSelect(arr){cmdSel=arr;updateCmdUI();toast('Now commanding: '+selNames());}
+function orderAllies(o,who){
+  const list=(who&&who.length)?who:allies;
+  list.forEach(a=>a.order=o);
+  updateCmdUI();
+  const name=(list.length>=allies.length)?'Companions':list.map(a=>a.name).join(' & ');
+  const verb=o==='gather'?'"We aid your quest!"':o==='attack'?'"To arms!"':'"We hold at your side."';
+  toast(name+': '+verb);
+}
+function setAllyOrder(o){orderAllies(o,cmdSel.map(i=>allies[i]));}   // command the selected companion(s)
+// parse a typed sentence into (who + what)
+function parseCommand(text){
+  const t=(text||'').toLowerCase();if(!t.trim())return;
+  let who=[];
+  if(/\b(lysander|red)\b/.test(t))who.push(allies[0]);
+  if(/\b(damon|blue)\b/.test(t))who.push(allies[1]);
+  if(/\b(both|all|every|everyone|team|squad|companion|companions|guys|men|soldiers|hoplites)\b/.test(t))who=allies.slice();
+  if(who.length===0)who=allies.slice();
+  let o=null;
+  if(/\b(attack|fight|charge|kill|slay|destroy|engage|strike|battle)\b/.test(t))o='attack';
+  else if(/\b(gather|collect|help|quest|flower|flowers|moonflower|moonflowers|brazier|braziers|light|relic|relics|fetch|pick|find)\b/.test(t))o='gather';
+  else if(/\b(follow|regroup|come|back|return|heel|stay|guard|defend|protect|hold|form|formation|side|me)\b/.test(t))o='follow';
+  if(!o){toast('Companions look puzzled — try "attack", "help", or "follow".');return;}
+  orderAllies(o,who);
+}
+// command-line input (type an order)
+let typing=false;
+function openCmd(){typing=true;
+  const cl=document.getElementById('cmdline'),ct=document.getElementById('cmdtext');
+  cl.classList.remove('hide');ct.value='';
+  for(const k in keys)keys[k]=false;   // drop held keys so you don't keep moving
+  document.exitPointerLock();setTimeout(()=>ct.focus(),0);}
+function closeCmd(){typing=false;
+  const cl=document.getElementById('cmdline'),ct=document.getElementById('cmdtext');
+  cl.classList.add('hide');ct.blur();}
+addEventListener('DOMContentLoaded',wireCmd);wireCmd();
+function wireCmd(){
+  const ct=document.getElementById('cmdtext');if(!ct||ct._wired)return;ct._wired=true;
+  ct.addEventListener('keydown',ev=>{ev.stopPropagation();
+    if(ev.key==='Enter'){parseCommand(ct.value);closeCmd();}
+    else if(ev.key==='Escape'){closeCmd();}});
+  document.querySelectorAll('#cmdbar .cmd').forEach(el=>{
+    el.addEventListener('click',ev=>{ev.stopPropagation();setAllyOrder(el.dataset.o);});});
+  document.querySelectorAll('#cmdbar .who2 .wa').forEach(el=>{
+    el.addEventListener('click',ev=>{ev.stopPropagation();setSelect([+el.dataset.a]);});});
+  updateCmdUI();
+}
+function moveAlly(a,tx,tz,spd,dt){
+  const dx=tx-a.x,dz=tz-a.z,dd=Math.hypot(dx,dz)||0.0001;
+  if(dd<0.35)return dd;
+  const nx=dx/dd,nz=dz/dd;
+  let mx=a.x+nx*spd*dt,mz=a.z+nz*spd*dt;
+  for(const o of obstacles){const ox=mx-o.x,oz=mz-o.z,od=Math.hypot(ox,oz),mn=o.r+a.r;
+    if(od<mn&&od>0.001){mx=o.x+ox/od*mn;mz=o.z+oz/od*mn;}}
+  const lim=WORLD*0.98;mx=Math.max(-lim,Math.min(lim,mx));mz=Math.max(-lim,Math.min(lim,mz));
+  a.x=mx;a.z=mz;a.group.rotation.y=Math.atan2(nx,nz);
+  return dd;
+}
+function updateAllies(dt,px,pz){
+  const sinY=Math.sin(yaw),cosY=Math.cos(yaw);
+  const fwdx=-sinY,fwdz=-cosY,sidex=cosY,sidez=-sinY;
+  const camQ=camera.getWorldQuaternion(new THREE.Quaternion());
+  allies.forEach((a,i)=>{
+    a.atkCd=Math.max(0,a.atkCd-dt);a.wob+=dt*6;
+    if(a.swing>0)a.swing=Math.max(0,a.swing-dt*4);
+    if(a.flame)a.flame.scale.set(1+Math.sin(a.wob*3)*0.2,1+Math.sin(a.wob*2.2+1)*0.3,1);
+    if(a.torch)a.torch.visible=(a.order==='gather'&&quest===4);   // draw torch only to light braziers
+    const sign=i?1:-1;
+    // stand ahead of the player and to the side, so they stay within your view
+    const homeX=px+fwdx*6+sidex*sign*3.6, homeZ=pz+fwdz*6+sidez*sign*3.6;
+    // health bar billboard
+    const hb=a.hpbar;hb.visible=!a.down;
+    if(!a.down){hb.position.set(a.x,4.95,a.z);hb.quaternion.copy(camQ);
+      const frac=Math.max(0,a.hp/a.maxhp);a.hpfg.scale.x=frac;a.hpfg.position.x=-(1-frac)*0.75;
+      a.hpfg.material.color.setHex(frac>0.5?0x36d05a:frac>0.25?0xd6b12a:0xd0342a);}
+    if(a.down){a.reviveT-=dt;
+      if(a.reviveT<=0){a.down=false;a.hp=a.maxhp;a.x=homeX;a.z=homeZ;a.group.visible=true;
+        burst(new THREE.Vector3(a.x,2,a.z),0x6fd0ff,16,5);toast(a.name+' returns to your side!');}
+      return;}
+    // nearest living demon
+    let tgt=null,tb=1e9;
+    for(const d of demons){if(!d.alive)continue;const dist=Math.hypot(d.x-a.x,d.z-a.z);
+      if(dist<tb){tb=dist;tgt=d;}}
+    // decide a goal by current order (gather = help the current quest objective)
+    let goalX=homeX,goalZ=homeZ,attacking=false;
+    let gObj=null,gR=2.5,gKind=null;
+    if(a.order==='gather'){
+      if(quest===1){gObj=moon.find(m=>!m.taken);gKind='moon';}
+      else if(quest===4){gObj=braziers.find(b=>!b.lit);gR=4;gKind='braz';}
+      else if(quest===7){gObj=relics.find(r=>!r.taken);gR=2.6;gKind='relic';}
+      if(gObj){goalX=gObj.x;goalZ=gObj.z;}
+      else if(tgt&&tb<16){goalX=tgt.x;goalZ=tgt.z;attacking=true;}
+    } else if(a.order==='attack'){
+      if(tgt&&tb<130){goalX=tgt.x;goalZ=tgt.z;attacking=true;}
+    } else { // follow — auto-defend nearby threats
+      if(tgt&&tb<18){goalX=tgt.x;goalZ=tgt.z;attacking=true;}
+    }
+    const far=Math.hypot(goalX-a.x,goalZ-a.z)>6;
+    moveAlly(a,goalX,goalZ,(attacking||far)?a.spd*1.5:a.spd,dt);
+    // act on the objective when the companion reaches it
+    if(gObj&&Math.hypot(gObj.x-a.x,gObj.z-a.z)<gR){
+      if(gKind==='moon')gatherMoonflower(gObj,'ally');
+      else if(gKind==='braz')lightBrazier(gObj,'ally');
+      else if(gKind==='relic')takeRelic(gObj,'ally');
+    }
+    // melee the target
+    if(attacking&&tgt&&tgt.alive){
+      const md=Math.hypot(tgt.x-a.x,tgt.z-a.z);
+      if(md<3.4){
+        if(a.atkCd===0){a.atkCd=0.6;a.swing=1;
+          hurtDemon(tgt,a.dmg,{x:(tgt.x-a.x)/(md||1),z:(tgt.z-a.z)/(md||1)});}
+        a.hp-=tgt.dmg*dt*0.5;
+        if(a.hp<=0){a.down=true;a.reviveT=9;a.group.visible=false;
+          burst(new THREE.Vector3(a.x,1.6,a.z),0xffaa40,18,6);
+          toast(a.name+' has fallen! They will recover shortly.');return;}
+      }
+    }
+    const gy=Math.abs(Math.sin(a.wob))*0.12;
+    a.group.position.set(a.x,gy,a.z);
+    a.spear.rotation.x=0.05 - Math.sin((1-a.swing)*Math.PI)*0.7;
+  });
+}
+
+// ============================================================= MONSTERS (Greek myth)
 const demons=[];
-// enemy archetypes — {hp,speed,dmg,scale,col,em,eye,xp,range,cd,glow,ranged,label}
+// archetypes — internal keys kept; labels/looks are Greek monsters
 const DTYPES={
-  grunt:{hp:54, speed:5.8, dmg:11, scale:1.0, col:0x2e1544, em:0x2a0a4a, eye:0xff3020, xp:14, range:2.6, cd:1.2, glow:0.7, label:'Shadow Demon'},
-  imp:  {hp:26, speed:9.6, dmg:7,  scale:0.65,col:0x7a2810, em:0xd23a10, eye:0xffcc20, xp:9,  range:2.2, cd:0.9, glow:0.9, label:'Imp'},
-  brute:{hp:150,speed:3.2, dmg:22, scale:1.9, col:0x241030, em:0x3a1050, eye:0xff2020, xp:34, range:3.2, cd:1.6, glow:1.0, label:'Brute'},
-  shade:{hp:42, speed:4.4, dmg:9,  scale:1.1, col:0x123047, em:0x1f6a8a, eye:0x6fe0ff, xp:22, range:40, cd:2.0, glow:1.1, ranged:true, label:'Shade'},
-  champion:{hp:120,speed:4.6,dmg:12,scale:1.7, col:0x431a66, em:0x5a1f8a, eye:0xff3020, xp:75, range:3,   cd:1.3, glow:1.4, label:'Demon Champion'},
-  boss:{hp:200,speed:3.8, dmg:13, scale:2.6, col:0x5a1030, em:0x7a1030, eye:0xff3020, xp:340, range:4,   cd:1.5, glow:2.0, label:'Demon Lord'}
+  grunt:{hp:54, speed:5.8, dmg:11, scale:1.0, col:0xbdae86, em:0x5a4a24, eye:0xff3020, xp:14, range:2.6, cd:1.2, glow:0.5, horns:true, label:'Skeleton Warrior'},
+  imp:  {hp:26, speed:9.8, dmg:7,  scale:0.75,col:0x7a5a2a, em:0x6a3a10, eye:0xffcc20, xp:9,  range:2.2, cd:0.9, glow:0.7, wings:true, label:'Harpy'},
+  brute:{hp:160,speed:3.1, dmg:22, scale:2.0, col:0x8a6a3a, em:0x4a3010, eye:0xff2020, xp:36, range:3.2, cd:1.6, glow:1.0, cyclops:true, horns:true, label:'Cyclops'},
+  shade:{hp:44, speed:4.3, dmg:9,  scale:1.1, col:0x2f6b3a, em:0x1f5f2f, eye:0xcaff5a, xp:22, range:40, cd:2.0, glow:1.0, ranged:true, snakes:true, label:'Gorgon'},
+  champion:{hp:130,speed:4.7,dmg:13,scale:1.9, col:0x6a3a1a, em:0x3a1808, eye:0xff3020, xp:80, range:3,   cd:1.3, glow:1.2, horns:true, label:'Minotaur'},
+  gorgonqueen:{hp:280,speed:3.6,dmg:16,scale:2.2,col:0x2f7a4a, em:0x155f2f, eye:0xd6ff4a, xp:220,range:42, cd:1.6, glow:1.6, ranged:true, snakes:true, label:'Medusa, the Gorgon Queen'},
+  boss:{hp:230,speed:3.9, dmg:14, scale:2.7, col:0x201018, em:0x5a1010, eye:0xff2010, xp:380, range:4,   cd:1.5, glow:2.0, heads:3, horns:true, label:'Cerberus, Hound of Hades'},
+  titan:{hp:560,speed:3.2,dmg:20, scale:3.4, col:0x9a7a4a, em:0x5a3a12, eye:0xffd23a, xp:600,range:4.4, cd:1.6, glow:2.6, cyclops:true, label:'Polyphemus, the Titan'}
 };
 function makeDemon(x,z,type){
   type=type||'grunt';const T=DTYPES[type],s=T.scale;
   const boss=type==='boss',champion=type==='champion';
   const g=new THREE.Group();
-  const bodyMat=new THREE.MeshStandardMaterial({color:T.col,roughness:.6,emissive:T.em,emissiveIntensity:.6});
-  const body=new THREE.Mesh(new THREE.SphereGeometry(1.1,16,16),bodyMat);body.position.y=1.5;body.castShadow=true;g.add(body);
-  const belly=new THREE.Mesh(new THREE.SphereGeometry(0.9,12,12),bodyMat);belly.position.y=0.7;belly.castShadow=true;g.add(belly);
-  for(const sx of[-1,1]){const h=new THREE.Mesh(new THREE.ConeGeometry(0.25,1.1,6),
-    new THREE.MeshStandardMaterial({color:0x120515,roughness:.4}));
-    h.position.set(sx*0.5,2.4,-0.1);h.rotation.z=sx*-0.5;g.add(h);}
+  // shared materials
+  const skin =new THREE.MeshStandardMaterial({color:T.col,emissive:T.em,emissiveIntensity:.35,roughness:.75,flatShading:true});
   const eyeMat=new THREE.MeshStandardMaterial({color:T.eye,emissive:T.eye,emissiveIntensity:3});
-  for(const sx of[-1,1]){const e=new THREE.Mesh(new THREE.SphereGeometry(0.16,8,8),eyeMat);
-    e.position.set(sx*0.35,1.7,0.95);g.add(e);}
-  for(const sx of[-1,1]){const a=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.16,1.4,6),bodyMat);
-    a.position.set(sx*1.1,1.4,0.2);a.rotation.z=sx*0.7;g.add(a);}
-  const gl=new THREE.PointLight(T.eye,T.glow,8*Math.max(1,s));gl.position.y=1.6;g.add(gl);
+  const bone =new THREE.MeshStandardMaterial({color:0xe9e3d2,emissive:0xffffff,emissiveIntensity:0,roughness:.55,flatShading:true});
+  const horn =new THREE.MeshStandardMaterial({color:0xf2ecd8,roughness:.45});
+  const dark =new THREE.MeshStandardMaterial({color:0x18100f,roughness:.6});
+  const metal=new THREE.MeshStandardMaterial({color:0x9a948a,metalness:.6,roughness:.4});
+  const wood =new THREE.MeshStandardMaterial({color:0x5a3a1e,roughness:.9});
+  const snake=new THREE.MeshStandardMaterial({color:0x2f8f4f,emissive:0x1f6f2f,emissiveIntensity:.8,roughness:.5,flatShading:true});
+  const gold =new THREE.MeshStandardMaterial({color:0xf5d24a,emissive:0xffb020,emissiveIntensity:.9,metalness:.7,roughness:.3});
+  const SPH=(r,d)=>new THREE.SphereGeometry(r,d||10,d||10),CYL=(a,b,h,n)=>new THREE.CylinderGeometry(a,b,h,n||7),
+        CON=(r,h,n)=>new THREE.ConeGeometry(r,h,n||6),BOX=(a,b,c)=>new THREE.BoxGeometry(a,b,c),
+        TOR=(r,t,arc)=>new THREE.TorusGeometry(r,t,8,16,arc||Math.PI*2);
+  function M(geo,mat,x,y,z,rx,ry,rz){const m=new THREE.Mesh(geo,mat);m.position.set(x||0,y||0,z||0);
+    if(rx||ry||rz)m.rotation.set(rx||0,ry||0,rz||0);m.castShadow=true;g.add(m);return m;}
+  function eyesAt(y,zz,sp,r){for(const sx of[-1,1])M(SPH(r,8),eyeMat,sx*sp,y,zz);}
+  const wings=[];let prime=skin,base=0.35,fly=false,flyH=0;
+
+  if(type==='imp'){ // ---- HARPY: winged bird-woman, hovers
+    fly=true;flyH=1.6;
+    M(SPH(0.5),skin,0,1.6,0).scale.set(1,1.4,0.9);             // feathered body
+    M(SPH(0.32),skin,0,2.45,0.05);                             // head
+    M(CON(0.12,0.35,6),horn,0,2.4,0.34,Math.PI/2);             // beak
+    eyesAt(2.55,0.3,0.14,0.08);
+    for(let i=-1;i<=1;i++)M(CON(0.09,0.9,5),skin,i*0.16,1.0,-0.55,-1.2);   // tail feathers
+    for(const sx of[-1,1]){                                     // wings
+      const w=M(CON(0.5,1.9,4),skin,sx*0.45,1.9,-0.1,0.2,0,sx*1.25);w.scale.set(1,1,0.22);
+      w.userData={sx:sx,baseZ:sx*1.25};wings.push(w);}
+    for(const sx of[-1,1]){M(CYL(0.05,0.05,0.7,5),horn,sx*0.2,0.95,0.05);   // bird legs
+      M(CON(0.1,0.25,4),horn,sx*0.2,0.6,0.24,Math.PI/2);}
+  } else if(type==='grunt'){ // ---- SKELETON WARRIOR with spear
+    prime=bone;base=0;
+    M(SPH(0.32),bone,0,2.35,0);                                // skull
+    M(BOX(0.28,0.14,0.26),bone,0,2.12,0.06);                   // jaw
+    eyesAt(2.42,0.28,0.11,0.06);
+    M(CYL(0.07,0.07,1.05,6),bone,0,1.55,0);                    // spine
+    for(let i=0;i<4;i++)M(TOR(0.3-i*0.02,0.035),bone,0,2.0-i*0.22,0,Math.PI/2);  // ribs
+    M(BOX(0.42,0.18,0.22),bone,0,0.98,0);                      // pelvis
+    for(const sx of[-1,1])M(CYL(0.05,0.05,0.95,5),bone,sx*0.33,1.55,0.03,0,0,sx*0.12);  // arms
+    for(const sx of[-1,1])M(CYL(0.06,0.06,1.0,5),bone,sx*0.15,0.5,0);       // legs
+    M(CYL(0.03,0.03,2.5,5),wood,0.46,1.5,0.12);               // spear shaft
+    M(CON(0.09,0.34,5),metal,0.46,2.85,0.12);                 // spear tip
+  } else if(type==='brute'||type==='titan'){ // ---- CYCLOPS / TITAN with club
+    M(SPH(1.0,12),skin,0,1.9,0).scale.set(1.05,1.25,0.95);     // torso
+    M(SPH(0.6,12),skin,0,3.3,0.05);                            // head
+    M(SPH(0.27,12),eyeMat,0,3.42,0.5);                         // single eye
+    M(BOX(0.75,0.13,0.22),skin,0,3.72,0.4);                    // brow
+    M(BOX(0.5,0.09,0.12),dark,0,2.98,0.52);                    // mouth
+    for(const sx of[-1,1])M(CYL(0.28,0.24,1.7,7),skin,sx*1.05,2.0,0.05,0,0,sx*0.22);  // arms
+    for(const sx of[-1,1])M(CYL(0.36,0.3,1.7,7),skin,sx*0.45,0.9,0);        // legs
+    M(CYL(0.14,0.3,1.9,8),wood,1.25,2.7,0.35,0.5,0,0.35);      // club
+  } else if(type==='champion'){ // ---- MINOTAUR with axe
+    for(const sx of[-1,1]){M(CYL(0.22,0.18,1.2,7),skin,sx*0.4,0.7,0);
+      M(CYL(0.2,0.22,0.3,7),dark,sx*0.4,0.15,0.05);}           // legs+hooves
+    M(SPH(0.9,12),skin,0,2.05,0).scale.set(1.15,1.2,0.9);      // torso
+    for(const sx of[-1,1])M(CYL(0.2,0.16,1.3,7),skin,sx*0.98,2.05,0.08,0,0,sx*0.28);  // arms
+    M(BOX(0.5,0.5,0.55),skin,0,3.15,0.15);                     // bull head
+    M(BOX(0.34,0.3,0.4),skin,0,3.05,0.5);                      // snout
+    for(const sx of[-1,1])M(SPH(0.05,6),dark,sx*0.09,3.0,0.72);// nostrils
+    for(const sx of[-1,1])M(TOR(0.26,0.06,Math.PI),horn,sx*0.32,3.45,0.12,0,0,sx*1.7); // horns
+    for(const sx of[-1,1])M(CON(0.1,0.3,5),skin,sx*0.42,3.3,0.1,0,0,sx*1.1);// ears
+    eyesAt(3.2,0.46,0.15,0.08);
+    M(CYL(0.05,0.05,2.1,6),wood,1.2,2.0,0.3,0.25,0,0);         // axe handle
+    const bl=M(CON(0.5,0.7,4),metal,1.42,3.0,0.3,Math.PI/2,0,0);bl.scale.set(1,0.35,1); // axe blade
+  } else if(type==='shade'||type==='gorgonqueen'){ // ---- GORGON / MEDUSA: serpent-bodied
+    const queen=type==='gorgonqueen';
+    M(TOR(0.95,0.34),skin,0,0.4,0,Math.PI/2);                  // coil 1
+    M(TOR(0.62,0.3),skin,0,0.78,0.15,Math.PI/2);               // coil 2
+    M(CON(0.42,1.3,10),skin,0,1.5,0.05);                       // rising tail
+    M(SPH(0.5,12),skin,0,2.2,0).scale.set(1,1.25,0.8);         // torso
+    M(SPH(0.3,10),skin,0,2.9,0.03);                            // head
+    eyesAt(2.95,0.26,0.11,0.07);
+    const nS=queen?11:7;                                        // snake hair
+    for(let i=0;i<nS;i++){const a=i/nS*Math.PI*2;
+      M(CON(0.07,0.62,5),snake,Math.cos(a)*0.33,3.15,Math.sin(a)*0.33,Math.sin(a)*0.7,0,-Math.cos(a)*0.7);}
+    if(queen)M(TOR(0.33,0.06),gold,0,3.1,0,Math.PI/2);         // crown
+    for(const sx of[-1,1])M(CYL(0.07,0.06,0.85,5),skin,sx*0.5,2.15,0.12,0,0,sx*0.5);  // arms
+    M(TOR(0.7,0.04,Math.PI),wood,-0.78,2.15,0.2,0,Math.PI/2);  // bow
+  } else if(type==='boss'){ // ---- CERBERUS: three-headed hound
+    M(SPH(1.0,12),skin,0,1.5,-0.2).scale.set(1.3,1.0,1.9);     // body
+    M(SPH(0.85,12),skin,0,1.5,-1.5);                           // haunches
+    for(const sx of[-1,1])for(const sz of[0.3,-1.5]){
+      M(CYL(0.18,0.16,1.4,7),skin,sx*0.72,0.7,sz);
+      M(SPH(0.22,8),dark,sx*0.72,0.12,sz+0.12);}               // legs + paws
+    M(CON(0.24,1.7,7),snake,0,1.9,-2.4,-0.9);                  // serpent tail
+    for(const hx of[-0.62,0,0.62]){const ny=hx===0?2.5:2.3;
+      M(CYL(0.2,0.26,1.0,7),skin,hx,1.95,0.7,0.65);            // neck
+      M(BOX(0.44,0.4,0.66),skin,hx*1.1,ny,1.32);               // skull
+      M(BOX(0.3,0.24,0.42),skin,hx*1.1,ny-0.1,1.66);           // snout
+      for(const sx of[-1,1])M(CON(0.1,0.3,5),skin,hx*1.1+sx*0.18,ny+0.3,1.15);   // ears
+      for(const sx of[-1,1])M(SPH(0.08,8),eyeMat,hx*1.1+sx*0.13,ny+0.05,1.66);}  // eyes
+  } else { // fallback blob
+    M(SPH(1.1,12),skin,0,1.5,0);eyesAt(1.7,0.95,0.3,0.15);
+  }
+
+  const gl=new THREE.PointLight(T.eye,T.glow,9*Math.max(1,s));gl.position.set(0,1.8,0.2);g.add(gl);
   g.scale.setScalar(s);g.position.set(x,0,z);scene.add(g);
   const hpJit=Math.round(T.hp*(0.9+Math.random()*0.25));
-  const d={group:g,x,z,type:type,label:T.label,hp:hpJit,max:hpJit,boss:boss,champion:champion,
-    ranged:!!T.ranged,dmg:T.dmg,atkRange:T.range,atkCdMax:T.cd,xp:T.xp,
+  const d={group:g,x,z,type:type,label:T.label,hp:hpJit,max:hpJit,
+    boss:boss,champion:champion,miniboss:type==='gorgonqueen',titan:type==='titan',
+    ranged:!!T.ranged,dmg:Math.round(T.dmg*1.15),atkRange:T.range,atkCdMax:T.cd,xp:T.xp,
     speed:T.speed*(0.9+Math.random()*0.2),atkCd:Math.random()*0.5,hurtT:0,slow:0,alive:true,r:1.1*s,
-    body:body,bodyMat:bodyMat,wob:Math.random()*7,summoned:false};
+    prime:prime,base:base,wings:wings,fly:fly,flyH:flyH,wob:Math.random()*7,summoned:false};
   demons.push(d);return d;
 }
 let demonsToSpawn=15,killGoal=15;
 function randomType(){const r=Math.random();
-  if(r<0.42)return'grunt';if(r<0.72)return'imp';if(r<0.89)return'shade';return'brute';}
+  // later levels lean toward the tougher archetypes (Cyclops/Gorgon)
+  if(player.level>=5)return r<0.28?'grunt':r<0.5?'imp':r<0.76?'shade':'brute';
+  if(r<0.38)return'grunt';if(r<0.66)return'imp';if(r<0.86)return'shade';return'brute';}
+// upgrade a roaming beast into a deadly, glowing ELITE
+function makeElite(d){
+  d.elite=true;
+  d.hp=Math.round(d.hp*2.4);d.max=d.hp;d.dmg=Math.round(d.dmg*1.6);
+  d.xp=Math.round(d.xp*3);d.speed*=1.08;
+  d.group.scale.multiplyScalar(1.35);d.r*=1.35;
+  d.base=Math.max(d.base,0.9);
+  const aura=new THREE.PointLight(0xffc040,1.8,17);aura.position.y=1.8;d.group.add(aura);
+  d.label='Elite '+d.label;
+}
 function spawnWave(type){
   const a=Math.random()*Math.PI*2,d=42+Math.random()*34;
-  makeDemon(camHolder.position.x+Math.cos(a)*d,camHolder.position.z+Math.sin(a)*d,type||randomType());
+  const dm=makeDemon(camHolder.position.x+Math.cos(a)*d,camHolder.position.z+Math.sin(a)*d,type||randomType());
+  // roaming threat scales with your level so the world stays dangerous
+  const lvl=player.level;
+  dm.hp=Math.round(dm.hp*(1+(lvl-1)*0.12));dm.max=dm.hp;
+  dm.dmg=Math.round(dm.dmg*(1+(lvl-1)*0.06));
+  if(!dm.boss&&!dm.champion){
+    const eliteChance=Math.min(0.4,0.05+lvl*0.035);
+    if(Math.random()<eliteChance)makeElite(dm);
+  }
+  return dm;
+}
+
+// ===== TITAN (Polyphemus) special attacks + camera shake =====
+const titanRocks=[];let shake=0;
+function hurlBoulder(d){
+  const fromY=9,T=1.15,gg=22;
+  const sx=camHolder.position.x,sz=camHolder.position.z;
+  const vx=(sx-d.x)/T,vz=(sz-d.z)/T,vy=(1-fromY+0.5*gg*T*T)/T;
+  const m=new THREE.Mesh(new THREE.DodecahedronGeometry(0.95,0),
+    new THREE.MeshStandardMaterial({color:0x6a5a48,roughness:.95,flatShading:true}));
+  m.position.set(d.x,fromY,d.z);scene.add(m);
+  titanRocks.push({mesh:m,x:d.x,y:fromY,z:d.z,vx:vx,vy:vy,vz:vz,g:gg});
+  toast('Polyphemus hurls a boulder!');
+}
+function updateBossBar(){
+  let b=null;
+  for(const d of demons){if(d.alive&&(d.boss||d.miniboss||d.titan||d.champion)){b=d;break;}}
+  const el=$('#bossbar');
+  if(b){el.classList.remove('hide');el.querySelector('.bn').textContent=b.label.toUpperCase();
+    el.querySelector('.bhp i').style.width=Math.max(0,b.hp/b.max*100)+'%';}
+  else el.classList.add('hide');
 }
 
 // ============================================================= FIREBOLTS + FX
 const bolts=[];
+function spawnBolt(pos,dir){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),
+    new THREE.MeshBasicMaterial({color:0xff9a3c}));
+  m.position.copy(pos);scene.add(m);
+  m.add(new THREE.PointLight(0xff7a2c,2,12));
+  bolts.push({mesh:m,dir:dir.clone().normalize(),life:2.2,dmg:36*player.dmgMult});
+}
 function castBolt(){
   const dir=new THREE.Vector3();camera.getWorldDirection(dir);
   const pos=new THREE.Vector3();camera.getWorldPosition(pos);
   pos.addScaledVector(dir,1.2);
-  const m=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12),
-    new THREE.MeshBasicMaterial({color:0xff9a3c}));
-  m.position.copy(pos);scene.add(m);
-  const l=new THREE.PointLight(0xff7a2c,2,12);m.add(l);
-  bolts.push({mesh:m,dir:dir.clone(),life:2.2,dmg:36*player.dmgMult});
+  spawnBolt(pos,dir);
+  if(player.twinBolt){                       // Lv3 perk — fire a second, angled bolt
+    const d2=dir.clone().applyAxisAngle(new THREE.Vector3(0,1,0),0.14);
+    spawnBolt(pos,d2);
+  }
   swingArm(true);
 }
 // enemy projectiles (shades)
@@ -507,7 +974,7 @@ function spawnOrb(x,z,kind){
   orbs.push({mesh:m,x:x,z:z,kind:kind});
 }
 function maybeDropLoot(d){
-  if(d.boss||d.champion){spawnOrb(d.x-1.5,d.z,'hp');spawnOrb(d.x+1.5,d.z,'mp');return;}
+  if(d.boss||d.champion||d.elite){spawnOrb(d.x-1.5,d.z,'hp');spawnOrb(d.x+1.5,d.z,'mp');return;}
   const r=Math.random();
   if(r<0.16)spawnOrb(d.x,d.z,'hp');
   else if(r<0.32)spawnOrb(d.x,d.z,'mp');
@@ -541,9 +1008,10 @@ let swingT=0,swingType=0; // 0 sword,1 cast
 function swingArm(cast){swingT=1;swingType=cast?1:0;}
 
 // ============================================================= PLAYER STATE
-const player={hp:100,maxhp:100,mp:100,maxmp:100,speed:34,sprint:44,
+const player={hp:100,maxhp:100,mp:100,maxmp:100,speed:96,sprint:120,
   vy:0,onGround:true,eye:3.4,atkCd:0,castCd:0,hurtCd:0,invuln:0,kills:0,
-  level:1,xp:0,xpNext:40,dmgMult:1,novaCd:0,healCd:0,chainCd:0};
+  level:1,xp:0,xpNext:40,dmgMult:1,novaCd:0,healCd:0,chainCd:0,blinkCd:0,meteorCd:0,
+  twinBolt:false,lifesteal:0,meteorN:3,dmgBonus:0};
 camHolder.position.set(0,player.eye,66);
 let yaw=0,pitch=0;
 camHolder.rotation.y=yaw;
@@ -624,19 +1092,67 @@ function castHeal(){
   burst(new THREE.Vector3(camHolder.position.x,player.eye,camHolder.position.z),0x4fd67a,28,4);
   toast('Healed!');
 }
+// ability: Blink (Shift) — dash forward through danger (unlocks Lv2)
+function castBlink(){
+  if(player.level<2){toast('BLINK unlocks at Level 2');return;}
+  if(player.blinkCd>0||player.mp<15)return;
+  player.blinkCd=3.5;player.mp-=15;player.invuln=Math.max(player.invuln,0.45);
+  const wx=-Math.sin(yaw),wz=-Math.cos(yaw),dist=17,steps=6;
+  const sx=camHolder.position.x,sz=camHolder.position.z;
+  for(let i=0;i<steps;i++)tryMove(camHolder.position.x+wx*(dist/steps),camHolder.position.z+wz*(dist/steps));
+  for(let i=0;i<=10;i++){const t=i/10;
+    burst(new THREE.Vector3(sx+wx*dist*t,player.eye-0.5,sz+wz*dist*t),0x8ad0ff,3,3);}
+  toast('Blink!');
+}
+// ability: Meteor Storm (V) — call fire from the sky (unlocks Lv4)
+const meteors=[];
+function castMeteor(){
+  if(player.level<4){toast('METEOR STORM unlocks at Level 4');return;}
+  if(player.meteorCd>0||player.mp<45)return;
+  player.meteorCd=11;player.mp-=45;
+  const dir=new THREE.Vector3();camera.getWorldDirection(dir);
+  const pos=new THREE.Vector3();camera.getWorldPosition(pos);
+  let tx,tz;
+  if(dir.y<-0.03){const td=Math.min(75,-pos.y/dir.y);tx=pos.x+dir.x*td;tz=pos.z+dir.z*td;}
+  else{tx=camHolder.position.x-Math.sin(yaw)*32;tz=camHolder.position.z-Math.cos(yaw)*32;}
+  spawnRing(tx,tz,0xff6a2c,9);
+  for(let k=0;k<player.meteorN;k++){
+    const ox=tx+(Math.random()*2-1)*4.5,oz=tz+(Math.random()*2-1)*4.5;
+    const m=new THREE.Mesh(new THREE.IcosahedronGeometry(0.9,0),
+      new THREE.MeshStandardMaterial({color:0x2a1008,emissive:0xff5a10,emissiveIntensity:2.2,roughness:.6,flatShading:true}));
+    m.position.set(ox,36,oz);scene.add(m);m.add(new THREE.PointLight(0xff6a20,2,22));
+    meteors.push({mesh:m,x:ox,z:oz,delay:k*0.16,fall:0.5});
+  }
+  toast('METEOR STORM!');
+}
 function gainXP(n){player.xp+=n;
   while(player.xp>=player.xpNext){player.xp-=player.xpNext;levelUp();}
 }
+function unlockAbility(k){const el=document.querySelector('#abilities .ab[data-k="'+k+'"]');if(el)el.classList.remove('locked');}
 function levelUp(){
-  player.level++;player.maxhp+=20;player.maxmp+=10;
+  player.level++;player.maxhp+=22;player.maxmp+=12;
   player.hp=player.maxhp;player.mp=player.maxmp;
-  player.dmgMult=1+(player.level-1)*0.15;
+  player.dmgMult=1+(player.level-1)*0.15+player.dmgBonus;
+  player.speed+=2;player.sprint+=2;               // grow a little swifter each level
   player.xpNext=Math.round(player.xpNext*1.5);
   burst(new THREE.Vector3(camHolder.position.x,player.eye,camHolder.position.z),0xf5c542,36,6);
   toast('LEVEL UP!  You are now Level '+player.level);
+  const L=player.level,perk=m=>setTimeout(()=>toast('⚔ '+m),1500);
+  if(L===2){unlockAbility('shift');perk('BLINK unlocked (Shift) — dash through danger');}
+  if(L===3){player.twinBolt=true;perk('Perk: TWIN FIREBOLT — your Firebolt now fires two bolts');}
+  if(L===4){unlockAbility('v');perk('METEOR STORM unlocked (V) — call fire from the sky');}
+  if(L===5){player.maxhp+=40;player.hp=player.maxhp;perk('Perk: VIGOR — +40 max health');}
+  if(L===6){player.speed+=6;player.sprint+=6;perk('Perk: SWIFTNESS — you move noticeably faster');}
+  if(L===7){player.lifesteal=0.12;perk('Perk: LIFEDRAIN — heal for 12% of the damage you deal');}
+  if(L===8){player.maxmp+=40;player.mp=player.maxmp;perk('Perk: ARCANE WELL — +40 max mana');}
+  if(L===9){player.meteorN=5;perk('Perk: METEOR MASTERY — Meteor Storm now rains 5 meteors');}
+  if(L===10){player.dmgBonus+=0.5;player.dmgMult+=0.5;perk('Perk: ASCENDANT — a permanent surge of power (+damage)');}
+  if(L>=11)perk('You are legendary — the preserve trembles before you.');
 }
 function hurtDemon(d,dmg,dir){
   if(!d.alive)return;d.hp-=dmg;d.hurtT=0.12;
+  if(player.lifesteal>0&&player.hp<player.maxhp)   // Lv7 perk — drain life from foes
+    player.hp=Math.min(player.maxhp,player.hp+dmg*player.lifesteal);
   const p=new THREE.Vector3(d.x,1.6,d.z);burst(p,0x9b5cff,10,6);
   const kb=(d.boss||d.champion||d.type==='brute')?0.3:1.1;
   d.x+=dir.x*kb;d.z+=dir.z*kb;
@@ -647,15 +1163,22 @@ function killDemon(d){
   burst(new THREE.Vector3(d.x,1.6,d.z),0xb070ff,26,8);
   gainXP(d.xp||10);maybeDropLoot(d);
   if(d.boss){onBossDead();return;}
+  if(d.miniboss){onGorgonQueenDead();return;}
   if(d.champion){onChampionDead();return;}
+  if(d.titan){onTitanDead();return;}
   player.kills++;
+  if(quest===12){remnantsSlain++;
+    if(remnantsSlain>=remnantGoal){setDone(12);setQuest(13);spawnObelisks();
+      toast('The rift tears wide — seal the 3 Rift Obelisks!');}
+    else toast('Remnant slain ('+remnantsSlain+'/'+remnantGoal+')');
+  }
   if(player.kills<=killGoal){
-    if(player.kills===killGoal){setDone(2);toast('The demon horde is broken!');
+    if(player.kills===killGoal){setDone(2);toast('The horde is broken!');
       if(quest>=2&&!guardian.freed) advanceIfReady();}
-    else toast('Demon slain  ('+player.kills+'/'+killGoal+')');
+    else toast('Beast slain  ('+player.kills+'/'+killGoal+')');
   }
   // heal a little
-  player.hp=Math.min(player.maxhp,player.hp+4);
+  player.hp=Math.min(player.maxhp,player.hp+2);
 }
 function hurtPlayer(dmg){
   if(player.invuln>0)return;player.hp-=dmg;player.invuln=0.5;player.hurtCd=0.35;
@@ -670,18 +1193,28 @@ function setActive(i){document.querySelectorAll('#quest .obj').forEach(o=>{
   const q=+o.dataset.q;o.classList.toggle('active',q===i&&!o.classList.contains('done'));});}
 function setDone(i){const o=document.querySelector('#quest .obj[data-q="'+i+'"]');
   if(o){o.classList.add('done');o.classList.remove('active');}}
-const objNames=['Speak with Eldrin the Wizard','Gather Moonflowers','Slay the shadow demons',
-  'Free the Forest Guardian','Light the Ancient Braziers','Defeat the Demon Champion',
-  'Defeat the Demon Lord','Claim the Sunstone'];
+const objNames=['Speak with Eldrin the Wizard','Gather Moonflowers','Slay the mythic beasts',
+  'Free the Forest Guardian','Light the Ancient Braziers','Slay the Minotaur',
+  'Consult Pythia the Oracle','Recover the Golden Relics','Slay Medusa the Gorgon Queen',
+  'Seek Circe the Enchantress','Defeat Cerberus','Claim the Sunstone',
+  'Slay the awakened remnants','Seal the Rift Obelisks','Defeat Polyphemus the Titan'];
 function setQuest(i){quest=i;setActive(i);$('#objtag').textContent='Objective: '+objNames[i];updateBeacon();}
 function updateBeacon(){
   let t=null;
   if(quest===0)t=wizard;
   else if(quest===1)t=moon.find(m=>!m.taken)||wizard;
-  else if(quest===2)t=null; // demons roam
+  else if(quest===2)t=null;                                    // beasts roam
   else if(quest===3)t=guardian;
   else if(quest===4)t=braziers.find(b=>!b.lit)||shrine;
-  else t=shrine; // 5,6,7 all at the temple
+  else if(quest===5)t=shrine;                                  // Minotaur at temple
+  else if(quest===6)t=pythia;
+  else if(quest===7)t=relics.find(r=>!r.taken)||pythia;
+  else if(quest===8)t=gorgonArena;                             // Medusa
+  else if(quest===9)t=circe;
+  else if(quest===10||quest===11)t=shrine;                     // Cerberus / claim the Sunstone
+  else if(quest===12)t=null;                                   // remnants roam
+  else if(quest===13)t=obelisks.find(o=>!o.sealed)||titanArena; // seal the obelisks
+  else t=titanArena;                                           // 14 — Polyphemus
   if(!t){beacon.visible=false;return;}
   beacon.visible=true;beacon.position.set(t.x,0,t.z);
 }
@@ -702,104 +1235,226 @@ function advanceIfReady(){
 function interact(){
   const px=camHolder.position.x,pz=camHolder.position.z;
   const near=(o)=>Math.hypot(px-o.x,pz-o.z)<6.5;
-  // wizard
+  // --- Eldrin the Wizard
   if(near(wizard)){
     if(quest===0){
       say('Eldrin the Wizard',[
-        "At last — a living soul braves the Preserve! You feel the rift's poison in the air, don't you?",
-        "The Sunstone in the old temple is the heart of this sanctuary. Without it, the demons will consume everything.",
-        "First, gather five Moonflowers — their light will shield you. They glow blue in the clearings, scattered far and wide.",
-        "Then cut down the shadow demons, and free the Forest Guardian they have caged to the west.",
-        "Take this ember of flame — press Right-Click or F to hurl a Firebolt. Go, seeker, and do not fall."
+        "At last — a living soul braves the Preserve! You feel the curse in the air, don't you?",
+        "Monsters of old Greek myth have poured through a rift: harpies, cyclopes, gorgons and worse.",
+        "The Sunstone in the old temple is the heart of this sanctuary. Without it, all is lost.",
+        "First, gather five Moonflowers — their light will shield you. They glow in the far clearings.",
+        "Then slay the beasts, free the Forest Guardian, and seek the two other mages of the wood.",
+        "Take this ember — press Right-Click or F to hurl a Firebolt. Go, seeker, and do not fall."
       ],()=>{setQuest(1);toast('New objective: Gather 5 Moonflowers');});
-    } else if(quest>=1&&quest<7){
-      const msgs={1:"The Moonflowers glow blue in the clearings — five of them, far apart. Follow the beacon of light.",
-        2:"You have the flowers' shield now. Thin the demon horde — "+player.kills+" of "+killGoal+" slain.",
-        3:"The Guardian is caged to the northwest. With the demons thinned, shatter the shadow lattice and free her.",
-        4:"Light the three Ancient Braziers scattered across the Preserve to break the temple's seal.",
-        5:"A Demon Champion now stalks the temple grounds. Cut it down to press on.",
-        6:"The Demon Lord waits at the altar. End him, and the Sunstone is yours."};
+    } else if(quest>=1&&quest<15){
+      const msgs={1:"The Moonflowers glow in the clearings — five of them, far apart. Follow the beacon of light.",
+        2:"Thin the horde of beasts — "+player.kills+" of "+killGoal+" slain.",
+        3:"The Forest Guardian is caged to the northwest. With the beasts thinned, free her.",
+        4:"Light the three Ancient Braziers to break the temple's seal.",
+        5:"A Minotaur guards the temple grounds. Cut it down.",
+        6:"Seek Pythia the Oracle to the far southeast — she sees what I cannot.",
+        7:"Recover the three Golden Relics the Oracle spoke of.",
+        8:"Medusa, the Gorgon Queen, has risen. Slay her — but beware her gaze.",
+        9:"Circe the Enchantress dwells to the far northwest. Seek her blessing before the end.",
+        10:"Cerberus, Hound of Hades, guards the Sunstone. End the beast, hero.",
+        11:"The Sunstone waits on the temple altar. Claim it — but be ready for what follows.",
+        12:"The final rift spews remnants! Slay "+remnantsSlain+" of "+remnantGoal+" to steady the tear.",
+        13:"Three Rift Obelisks hold the deep rift open. Seal all three to force the Titan through.",
+        14:"Polyphemus, the one-eyed Titan, walks at last. Fell the giant and END this, hero!"};
       say('Eldrin the Wizard',[msgs[quest]]);
     } else {
       say('Eldrin the Wizard',["You did it. The Sunstone blazes, the rift is sealed, and the Ancient World is saved. Farewell, hero of the Preserve."]);
     }
     return true;
   }
-  // guardian
+  // --- Pythia the Oracle
+  if(near(pythia)){
+    if(quest===6){
+      say('Pythia the Oracle',[
+        "I have waited for you, hero. The threads of fate led you to my grove.",
+        "The Sunstone cannot be reclaimed by force alone. Three Golden Relics must be gathered first.",
+        "They lie scattered at the edges of the Preserve — I have set beacons upon them.",
+        "But heed my vision: when the last relic is lifted, Medusa the Gorgon Queen will wake.",
+        "Gather them, face her, and do not meet her eyes. Go — fate walks with you."
+      ],()=>{setQuest(7);toast('Recover the 3 Golden Relics');});
+    } else if(quest>6){
+      say('Pythia the Oracle',["The fates have spoken — press on, hero. Your path lies onward."]);
+    } else {
+      say('Pythia the Oracle',["The time is not yet. Return when Eldrin's tasks are done."]);
+    }
+    return true;
+  }
+  // --- Circe the Enchantress
+  if(near(circe)){
+    if(quest===9){
+      say('Circe the Enchantress',[
+        "So — you slew the Gorgon Queen and still your heart beats. Impressive, mortal.",
+        "Cerberus guards the Sunstone now, three-headed hound of the underworld itself.",
+        "You cannot best it unaided. Accept my enchantment — vigor and power flow into you.",
+        "*golden light wreathes your body*  Now go. Break the beast, and claim your prize."
+      ],()=>{
+        player.maxhp+=40;player.hp=player.maxhp;player.maxmp+=20;player.mp=player.maxmp;
+        player.dmgMult+=0.25;
+        burst(new THREE.Vector3(camHolder.position.x,player.eye,camHolder.position.z),0xf5c542,40,6);
+        shrine.active=true;shrine.stone.material.emissiveIntensity=2.4;
+        makeDemon(shrine.x,shrine.z+10,'boss');
+        setQuest(10);toast('Circe empowers you! Cerberus stirs at the temple.');
+      });
+    } else if(quest>9){
+      say('Circe the Enchantress',["My enchantment is upon you. End the hound and be done."]);
+    } else {
+      say('Circe the Enchantress',["Come back when the Gorgon Queen lies dead, mortal."]);
+    }
+    return true;
+  }
+  // --- Forest Guardian
   if(near(guardian)){
     if(quest===3&&!guardian.freed){
       guardian.freed=true;guardian.lattice.visible=false;setDone(3);
       burst(new THREE.Vector3(guardian.x,2.5,guardian.z),0x4fd67a,40,7);
       say('Forest Guardian',[
         "*the cage bursts into green light* — Free! You have my thanks, brave one.",
-        "You cleared the shadow that bound me. Now I return the favor:",
-        "The temple is sealed by dark magic. Three Ancient Braziers stand scattered across the Preserve —",
-        "kindle them all, and the seal will shatter. But the demons left fierce guardians behind...",
+        "You cleared the beasts that bound me. Now I return the favor:",
+        "The temple is sealed by old magic. Three Ancient Braziers stand across the Preserve —",
+        "kindle them all, and the seal will shatter. But a Minotaur was left to guard it...",
         "Go with the light of the forest at your back!"
       ],()=>{toast('Light the 3 Ancient Braziers scattered across the Preserve');setQuest(4);});
     } else if(guardian.freed){
-      say('Forest Guardian',["Light the Ancient Braziers, then cast down whatever guards the temple, hero!"]);
+      say('Forest Guardian',["Light the Ancient Braziers, then face what guards the temple, hero!"]);
     } else {
-      say('Forest Guardian',["*trapped in shadow* The demons' corruption seals my cage... slay more of them ("+player.kills+"/"+killGoal+") to break it!"]);
+      say('Forest Guardian',["*trapped in shadow* The beasts' curse seals my cage... slay more of them ("+player.kills+"/"+killGoal+") to break it!"]);
     }
     return true;
   }
-  // shrine / sunstone
+  // --- Shrine / Sunstone
   if(Math.hypot(px-shrine.x,pz-shrine.z)<6){
-    if(quest===7&&shrine.active&&!shrine.taken){
-      shrine.taken=true;setDone(7);shrine.group.remove(shrine.stone);
+    if(quest===11&&shrine.active&&!shrine.taken){
+      shrine.taken=true;setDone(11);shrine.group.remove(shrine.stone);
       burst(new THREE.Vector3(shrine.x,5,shrine.z),0xffd24a,60,9);
       say('The Ancient Shrine',[
         "*you raise the Sunstone; warmth floods the ruined temple*",
-        "The rift collapses. Light pours back into the Verdant Preserve, and the demons dissolve into mist.",
-        "The ancient artifact is yours, and the sanctuary is saved."
-      ],win);
+        "But as the stone leaves the altar, the ground shudders — the last and deepest rift tears open!",
+        "Awakened remnants of the myth-beasts pour forth, and something vast stirs beneath the Preserve...",
+        "The Sunstone is yours — now you must defend it. Steel yourself, hero."
+      ],startActIII);
     } else if(!shrine.active){
       say('The Ancient Shrine',["The altar is cold and sealed. Awaken the Preserve's magic first."]);
-    } else if(quest<7){
-      say('The Ancient Shrine',["The Demon Lord still lives. Defeat him before the stone will yield."]);
+    } else if(quest<11){
+      say('The Ancient Shrine',["Cerberus still lives. Defeat the hound before the stone will yield."]);
     }
     return true;
   }
   return false;
 }
 function onBossDead(){
-  toast('The Demon Lord is slain!');
-  if(quest===6){setDone(6);setQuest(7);toast('Claim the Sunstone!');}
+  toast('Cerberus is vanquished!');
+  if(quest===10){setDone(10);setQuest(11);toast('Claim the Sunstone!');}
 }
 function onChampionDead(){
-  toast('The Demon Champion falls!');
-  if(quest===5){setDone(5);setQuest(6);
-    shrine.active=true;shrine.stone.material.emissiveIntensity=2.4;
-    makeDemon(shrine.x,shrine.z+10,'boss');
-    toast('The Demon Lord emerges at the temple!');}
+  toast('The Minotaur is slain!');
+  if(quest===5){setDone(5);setQuest(6);toast('Seek Pythia the Oracle');}
+}
+function onGorgonQueenDead(){
+  toast('Medusa, the Gorgon Queen, falls!');
+  if(quest===8){setDone(8);setQuest(9);toast('Seek Circe the Enchantress');}
 }
 
+// collect a single moonflower (by the player, or by a companion)
+function gatherMoonflower(m,who){
+  if(m.taken)return;
+  m.taken=true;scene.remove(m.group);flowersGot++;
+  burst(new THREE.Vector3(m.x,1.3,m.z),0x8aa0ff,20,5);
+  player.maxmp+=10;player.mp=player.maxmp;
+  if(flowersGot>=5){setDone(1);toast('All Moonflowers gathered! Now slay the beasts.');setQuest(2);}
+  else{toast('Moonflower gathered ('+flowersGot+'/5)'+(who==='ally'?' — a companion brought it':''));updateBeacon();}
+}
 // collect moonflowers by walking over them
 function checkPickups(){
-  if(quest!==1&&flowersGot<3){/*still allow during quest1*/}
   const px=camHolder.position.x,pz=camHolder.position.z;
   for(const m of moon){if(m.taken)continue;
-    if(Math.hypot(px-m.x,pz-m.z)<2.5){m.taken=true;scene.remove(m.group);flowersGot++;
-      burst(new THREE.Vector3(m.x,1.3,m.z),0x8aa0ff,20,5);
-      player.maxmp+=10;player.mp=player.maxmp;
-      if(flowersGot>=5){setDone(1);toast('All Moonflowers gathered! Now slay the demons.');setQuest(2);}
-      else{toast('Moonflower gathered ('+flowersGot+'/5)');updateBeacon();}
-    }}
+    if(Math.hypot(px-m.x,pz-m.z)<2.5)gatherMoonflower(m,'player');}
+}
+// light a single brazier (by the player, or by a companion's torch)
+function lightBrazier(b,who){
+  if(b.lit)return;
+  b.lit=true;b.fire.visible=true;b.light.intensity=2;
+  burst(new THREE.Vector3(b.x,4.5,b.z),0xff9a3c,26,6);
+  const n=braziers.filter(o=>o.lit).length;
+  if(n>=3){setDone(4);setQuest(5);
+    makeDemon(shrine.x,shrine.z+14,'champion');
+    toast('The seal breaks! A Minotaur guards the temple.');}
+  else{toast('Ancient Brazier lit ('+n+'/3)'+(who==='ally'?' — a companion lit it':''));updateBeacon();}
 }
 // light braziers by walking up to them (quest 4)
 function checkBraziers(){
   if(quest!==4)return;
   const px=camHolder.position.x,pz=camHolder.position.z;
   for(const b of braziers){if(b.lit)continue;
-    if(Math.hypot(px-b.x,pz-b.z)<4){b.lit=true;b.fire.visible=true;b.light.intensity=2;
-      burst(new THREE.Vector3(b.x,4.5,b.z),0xff9a3c,26,6);
-      const n=braziers.filter(o=>o.lit).length;
-      if(n>=3){setDone(4);setQuest(5);
-        makeDemon(shrine.x,shrine.z+14,'champion');
-        toast('The seal breaks! A Demon Champion guards the temple.');}
-      else{toast('Ancient Brazier lit ('+n+'/3)');updateBeacon();}
-    }}
+    if(Math.hypot(px-b.x,pz-b.z)<4)lightBrazier(b,'player');}
+}
+// collect Golden Relics (quest 7) — the last one wakes Medusa
+let relicsGot=0;
+function takeRelic(r,who){
+  if(r.taken)return;
+  r.taken=true;scene.remove(r.group);relicsGot++;
+  burst(new THREE.Vector3(r.x,1.6,r.z),0xffd24a,24,5);
+  player.maxhp+=15;player.hp=player.maxhp;
+  if(relicsGot>=3){setDone(7);setQuest(8);
+    makeDemon(gorgonArena.x,gorgonArena.z,'gorgonqueen');
+    toast('The last relic wakes Medusa, the Gorgon Queen!');}
+  else{toast('Golden Relic recovered ('+relicsGot+'/3)'+(who==='ally'?' — a companion fetched it':''));updateBeacon();}
+}
+function checkRelics(){
+  if(quest!==7)return;
+  const px=camHolder.position.x,pz=camHolder.position.z;
+  for(const r of relics){if(r.taken)continue;
+    if(Math.hypot(px-r.x,pz-r.z)<2.6)takeRelic(r,'player');}
+}
+
+// ===== ACT III — after the Sunstone is claimed =====
+function startActIII(){
+  setQuest(12);
+  for(let k=0;k<5;k++)spawnWave();     // the rift belches out a horde of remnants
+  toast('The Sunstone tears the last rift wide — slay the awakened remnants!');
+}
+// Rift Obelisks — seal all three to drag the Titan into the world (quest 13)
+function makeObelisk(x,z){
+  const g=new THREE.Group();
+  const stoneMat=new THREE.MeshStandardMaterial({color:0x2a2438,roughness:.85,metalness:.2,map:rockTex});
+  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.85,6,4),stoneMat);
+  shaft.position.y=3;shaft.rotation.y=Math.PI/4;shaft.castShadow=true;g.add(shaft);
+  const cap=new THREE.Mesh(new THREE.ConeGeometry(0.8,1.3,4),stoneMat);cap.position.y=6.3;cap.rotation.y=Math.PI/4;g.add(cap);
+  const core=new THREE.Mesh(new THREE.IcosahedronGeometry(0.6,0),
+    new THREE.MeshStandardMaterial({color:0x9f3cff,emissive:0x7a1fd0,emissiveIntensity:2.2,roughness:.3}));
+  core.position.y=3.2;g.add(core);
+  const l=new THREE.PointLight(0x9f3cff,1.9,18);l.position.y=3.4;g.add(l);
+  g.position.set(x,0,z);scene.add(g);addObstacle(x,z,1.0);
+  return {group:g,core:core,light:l,x,z,sealed:false};
+}
+function spawnObelisks(){
+  const spots=[[-220,-150],[220,-150],[0,-280]];
+  for(const s of spots)obelisks.push(makeObelisk(s[0],s[1]));
+  updateBeacon();
+}
+function sealObelisk(o){
+  if(o.sealed)return;o.sealed=true;
+  o.core.material.color.setHex(0x8ad0ff);o.core.material.emissive.setHex(0x3fb0ff);
+  o.light.color.setHex(0x8ad0ff);
+  burst(new THREE.Vector3(o.x,3.2,o.z),0x8ad0ff,26,6);
+  const n=obelisks.filter(q=>q.sealed).length;
+  if(n>=3){setDone(13);setQuest(14);
+    makeDemon(titanArena.x,titanArena.z,'titan');
+    toast('The rifts close — Polyphemus the Titan is dragged into our world!');}
+  else{toast('Rift Obelisk sealed ('+n+'/3)');updateBeacon();}
+}
+function checkObelisks(){
+  if(quest!==13)return;
+  const px=camHolder.position.x,pz=camHolder.position.z;
+  for(const o of obelisks){if(o.sealed)continue;
+    if(Math.hypot(px-o.x,pz-o.z)<4.2)sealObelisk(o);}
+}
+function onTitanDead(){
+  if(quest===14){setDone(14);startFinale();}
 }
 
 // ============================================================= MOVEMENT + COLLISION
@@ -824,10 +1479,11 @@ function updateHUD(){
   $('#hptext').textContent='HP '+Math.ceil(player.hp)+' / '+player.maxhp;
   $('#mptext').textContent='MANA '+Math.ceil(player.mp)+' / '+player.maxmp;
   $('#xptext').textContent='Lv '+player.level+'  —  XP '+Math.floor(player.xp)+' / '+player.xpNext;
-  $('#stats').innerHTML='Level <b>'+player.level+'</b><br>Demons slain: <b>'+player.kills+'</b>'+
+  $('#stats').innerHTML='Level <b>'+player.level+'</b><br>Beasts slain: <b>'+player.kills+'</b>'+
     (flowersGot?'<br>Moonflowers: <b>'+flowersGot+'/5</b>':'');
   setCd('lmb',player.atkCd,0.36);setCd('f',player.castCd,0.5);
   setCd('q',player.novaCd,5);setCd('c',player.chainCd,6);setCd('r',player.healCd,7);
+  setCd('shift',player.blinkCd,3.5);setCd('v',player.meteorCd,11);
 }
 const DIRS=['N','NE','E','SE','S','SW','W','NW'];
 function updateCompass(){
@@ -843,11 +1499,25 @@ function flashHurt(){hurtFlash=1;}
 function loop(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;
   requestAnimationFrame(loop);
+  if(gameState==='finale'){
+    finaleT-=dt;const p=1-Math.max(0,finaleT)/4.8;
+    if(finaleBeam){finaleBeam.material.opacity=Math.min(0.85,p*1.3);
+      finaleBeam.rotation.y+=dt*0.7;finaleBeam.userData.light.intensity=p*7;
+      finaleBeam.scale.set(1+p*0.6,1,1+p*0.6);}
+    $('#finale').style.opacity=Math.min(1,p*1.5);
+    camPitch.rotation.x=Math.min(0.55,camPitch.rotation.x+dt*0.16);
+    shake=Math.max(shake,0.14*(1-p));
+    renderScene(dt);
+    if(finaleT<=0)win();
+    return;
+  }
   if(gameState!=='play'){renderer.render(scene,camera);return;}
 
   // dialog gate
   if(dlgOn){if(tapped('e'))nextLine();
     renderScene(dt);return;}
+  // typing a command — pause input while the command line is open
+  if(typing){renderScene(dt);return;}
 
   // cooldowns / regen
   player.atkCd=Math.max(0,player.atkCd-dt);
@@ -855,10 +1525,12 @@ function loop(now){
   player.novaCd=Math.max(0,player.novaCd-dt);
   player.healCd=Math.max(0,player.healCd-dt);
   player.chainCd=Math.max(0,player.chainCd-dt);
+  player.blinkCd=Math.max(0,player.blinkCd-dt);
+  player.meteorCd=Math.max(0,player.meteorCd-dt);
   player.invuln=Math.max(0,player.invuln-dt);
   player.hurtCd=Math.max(0,player.hurtCd-dt);
   if(player.mp<player.maxmp)player.mp=Math.min(player.maxmp,player.mp+7*dt);
-  if(player.hp<player.maxhp)player.hp=Math.min(player.maxhp,player.hp+0.6*dt);
+  if(player.hp<player.maxhp)player.hp=Math.min(player.maxhp,player.hp+0.35*dt);
 
   // movement — hold SPACE to walk forward in the direction you look
   const spd=player.speed;
@@ -878,7 +1550,17 @@ function loop(now){
   if(tapped('q'))castNova();
   if(tapped('c'))castChain();
   if(tapped('r'))castHeal();
+  if(tapped('shift'))castBlink();
+  if(tapped('v'))castMeteor();
   if(tapped('e'))interact();
+  // companion commands — pick who with 1/2/3, then order with G/T/H
+  if(tapped('1'))setSelect([0]);
+  if(tapped('2'))setSelect([1]);
+  if(tapped('3'))setSelect([0,1]);
+  if(tapped('g'))setAllyOrder('gather');
+  if(tapped('t'))setAllyOrder('attack');
+  if(tapped('h'))setAllyOrder('follow');
+  if(tapped('enter'))openCmd();
 
   // firebolts
   for(const b of bolts){b.mesh.position.addScaledVector(b.dir,34*dt);b.life-=dt;
@@ -887,6 +1569,32 @@ function loop(now){
         hurtDemon(d,b.dmg,b.dir);b.life=0;burst(b.mesh.position.clone(),0xff7a2c,14,6);break;}}
   }
   for(let i=bolts.length-1;i>=0;i--)if(bolts[i].life<=0){scene.remove(bolts[i].mesh);bolts.splice(i,1);}
+
+  // meteors — fall then explode in an AoE
+  for(const mt of meteors){
+    if(mt.delay>0){mt.delay-=dt;continue;}
+    mt.fall-=dt;
+    mt.mesh.position.y=Math.max(1.0,mt.fall/0.5*35+1.0);
+    mt.mesh.rotation.x+=dt*10;mt.mesh.rotation.y+=dt*8;
+    if(mt.fall<=0&&!mt.hit){mt.hit=true;
+      spawnRing(mt.x,mt.z,0xff8a2c,10);burst(new THREE.Vector3(mt.x,1.2,mt.z),0xff7a2c,28,9);
+      for(const d of demons){if(!d.alive)continue;const dd=Math.hypot(d.x-mt.x,d.z-mt.z);
+        if(dd<9){hurtDemon(d,72*player.dmgMult,{x:(d.x-mt.x)/(dd||1),z:(d.z-mt.z)/(dd||1)});d.slow=Math.max(d.slow,1.2);}}
+      mt.mesh.visible=false;mt.done=0.05;}
+  }
+  for(let i=meteors.length-1;i>=0;i--){const mt=meteors[i];
+    if(mt.done!=null){mt.done-=dt;if(mt.done<=0){scene.remove(mt.mesh);meteors.splice(i,1);}}}
+
+  // titan boulders — ballistic arc, then crash for AoE
+  for(const r of titanRocks){
+    if(r.hit){r.done-=dt;continue;}
+    r.vy-=r.g*dt;r.x+=r.vx*dt;r.y+=r.vy*dt;r.z+=r.vz*dt;
+    r.mesh.position.set(r.x,r.y,r.z);r.mesh.rotation.x+=dt*5;r.mesh.rotation.z+=dt*4;
+    if(r.y<=1){r.hit=true;r.done=0.1;r.mesh.visible=false;
+      spawnRing(r.x,r.z,0xffb020,9);burst(new THREE.Vector3(r.x,1,r.z),0x8a7a60,26,8);shake=Math.max(shake,0.35);
+      const dd=Math.hypot(camHolder.position.x-r.x,camHolder.position.z-r.z);if(dd<7)hurtPlayer(24);}
+  }
+  for(let i=titanRocks.length-1;i>=0;i--)if(titanRocks[i].hit&&titanRocks[i].done<=0){scene.remove(titanRocks[i].mesh);titanRocks.splice(i,1);}
 
   // enemy projectiles
   for(const b of eBolts){b.mesh.position.addScaledVector(b.dir,26*dt);b.life-=dt;
@@ -934,8 +1642,11 @@ function loop(now){
       d.x=mx;d.z=mz;
     }
     d.group.rotation.y=Math.atan2(nx,nz);
-    d.group.position.set(d.x,Math.abs(Math.sin(d.wob))*0.2*(d.type==='imp'?1.6:1),d.z);
-    d.bodyMat.emissiveIntensity=d.hurtT>0?3:(d.slow>0?1.4:0.6);
+    const gy=d.fly?d.flyH+Math.sin(d.wob*1.4)*0.28:Math.abs(Math.sin(d.wob))*0.16;
+    d.group.position.set(d.x,gy,d.z);
+    if(d.wings.length){const fl=Math.sin(d.wob*5)*0.6;
+      for(const w of d.wings)w.rotation.z=w.userData.baseZ+w.userData.sx*fl;}
+    d.prime.emissiveIntensity=d.hurtT>0?1.8:(d.slow>0?0.9:d.base);
     // attack
     if(d.ranged){
       if(dd<40&&dd>6&&d.atkCd===0){d.atkCd=d.atkCdMax;fireEnemyBolt(d);}
@@ -947,14 +1658,33 @@ function loop(now){
       const kinds=['imp','imp','grunt','shade'];
       for(let k=0;k<4;k++){const a=k/4*Math.PI*2;
         makeDemon(d.x+Math.cos(a)*9,d.z+Math.sin(a)*9,kinds[k]);}
-      toast('The Demon Lord howls and summons a pack of demons!');}
+      toast('Cerberus howls and summons a pack of beasts!');}
+    // TITAN — boulder hurls, ground slam, and an enrage phase (grand finale battle)
+    if(d.titan){
+      d.specCd=(d.specCd==null?2.5:d.specCd)-dt;
+      if(d.specCd<=0&&dd<65){
+        if(dd<14){                                   // ground slam shockwave
+          spawnRing(d.x,d.z,0xffb020,16);burst(new THREE.Vector3(d.x,0.6,d.z),0xffcaa0,30,9);
+          if(dd<16)hurtPlayer(d.dmg);shake=Math.max(shake,0.6);
+        } else hurlBoulder(d);                        // long-range boulder
+        d.specCd=3.0;
+      }
+      if(!d.enraged&&d.hp<=d.max*0.5){d.enraged=true;d.speed*=1.4;d.base=1.4;
+        for(let k=0;k<4;k++){const a=k/4*Math.PI*2;makeDemon(d.x+Math.cos(a)*11,d.z+Math.sin(a)*11,'grunt');}
+        shake=Math.max(shake,0.7);toast('Polyphemus ROARS and the earth trembles!');}
+    }
   }
-  // spawning: big varied horde during the slaying stage, light roaming danger after
-  const roamAlive=demons.filter(d=>d.alive&&!d.boss&&!d.champion).length;
+  // companions follow / gather / fight at your command
+  updateAllies(dt,px,pz);
+
+  // spawning: big varied horde during the slaying stages, light roaming danger after
+  const roamAlive=demons.filter(d=>d.alive&&!d.boss&&!d.champion&&!d.titan).length;
   if(quest===2){
-    if(player.kills+roamAlive<killGoal&&roamAlive<11&&Math.random()<dt*2.4)spawnWave();
-  } else if(quest>=3&&quest<6){
-    if(roamAlive<6&&Math.random()<dt*0.6)spawnWave();
+    if(player.kills+roamAlive<killGoal&&roamAlive<13&&Math.random()<dt*2.7)spawnWave();
+  } else if(quest===12){                                   // Act III remnant horde
+    if(remnantsSlain+roamAlive<remnantGoal&&roamAlive<14&&Math.random()<dt*2.9)spawnWave();
+  } else if(quest>=3&&quest<15){
+    if(roamAlive<8&&Math.random()<dt*0.75)spawnWave();
   }
 
   // guardian can be freed once demons cleared → advance quest 2→3
@@ -963,10 +1693,12 @@ function loop(now){
   // pickups
   checkPickups();
   checkBraziers();
+  checkRelics();
+  checkObelisks();
   // interact prompt
   updatePrompt();
 
-  updateHUD();updateCompass();
+  updateHUD();updateCompass();updateBossBar();
   renderScene(dt);
 }
 
@@ -974,6 +1706,10 @@ function renderScene(dt){
   // animate ambient stuff
   const t=performance.now()/1000;
   wizard.orb.position.y=4.2+Math.sin(t*2)*0.15;
+  pythia.orb.position.y=4.2+Math.sin(t*2+1)*0.15;
+  circe.orb.position.y=4.2+Math.sin(t*2+2)*0.15;
+  relics.forEach(r=>{if(!r.taken){r.relic.rotation.y+=dt*1.4;r.relic.rotation.x+=dt*0.6;
+    r.relic.position.y=1.6+Math.sin(t*2+r.x)*0.15;}});
   if(!guardian.freed){guardian.cre.rotation.y+=dt*0.6;guardian.cre.position.y=2.5+Math.sin(t*2)*0.15;
     guardian.lattice.rotation.y+=dt*0.4;}
   else{guardian.cre.position.y=3.4+Math.sin(t*3)*0.3;guardian.cre.rotation.y+=dt*1.2;}
@@ -981,6 +1717,9 @@ function renderScene(dt){
   if(shrine.stone&&!shrine.taken){shrine.stone.rotation.y+=dt*0.8;
     shrine.stone.position.y=4.4+Math.sin(t*1.5)*0.2;
     if(shrine.active)shrine.light.intensity=2.2+Math.sin(t*3)*0.8;}
+  obelisks.forEach(o=>{o.core.rotation.y+=dt*1.6;o.core.rotation.x+=dt*0.8;
+    o.core.position.y=3.2+Math.sin(t*2+o.x)*0.18;
+    if(!o.sealed)o.light.intensity=1.5+Math.sin(t*5+o.x)*0.6;});
   braziers.forEach(b=>{if(b.lit){b.fire.scale.set(1+Math.sin(t*13+b.x)*0.15,1+Math.sin(t*10+b.z)*0.25,1);
     b.light.intensity=1.7+Math.sin(t*16+b.x)*0.6;}});
   orbs.forEach(o=>{o.mesh.rotation.y+=dt*2;o.mesh.position.y=1.2+Math.sin(t*3+o.x)*0.25;});
@@ -1010,6 +1749,10 @@ function renderScene(dt){
   // sun follows player so shadows stay crisp
   sun.position.set(camHolder.position.x+80,140,camHolder.position.z+40);
   sun.target.position.set(camHolder.position.x,0,camHolder.position.z);
+  // camera shake (titan slams, boulder impacts, the finale)
+  if(shake>0){shake=Math.max(0,shake-dt);
+    camPitch.position.x=(Math.random()-0.5)*shake*0.7;camPitch.position.z=(Math.random()-0.5)*shake*0.7;}
+  else{camPitch.position.x*=0.8;camPitch.position.z*=0.8;}
 
   renderer.render(scene,camera);
 }
@@ -1018,10 +1761,12 @@ function updatePrompt(){
   const px=camHolder.position.x,pz=camHolder.position.z;
   const p=$('#prompt');let label='';
   if(Math.hypot(px-wizard.x,pz-wizard.z)<6.5)label='[E] Talk to Eldrin';
+  else if(Math.hypot(px-pythia.x,pz-pythia.z)<6.5)label='[E] Talk to Pythia the Oracle';
+  else if(Math.hypot(px-circe.x,pz-circe.z)<6.5)label='[E] Talk to Circe the Enchantress';
   else if(Math.hypot(px-guardian.x,pz-guardian.z)<6.5)
     label=guardian.freed?'[E] Talk to the Guardian':(player.kills>=killGoal?'[E] Free the Guardian':'[E] Inspect the Cage');
   else if(Math.hypot(px-shrine.x,pz-shrine.z)<6)
-    label=(quest===7&&!shrine.taken)?'[E] Take the Sunstone':'[E] Inspect the Shrine';
+    label=(quest===11&&!shrine.taken)?'[E] Take the Sunstone':'[E] Inspect the Shrine';
   if(label&&!dlgOn){p.textContent=label;p.classList.remove('hide');}else p.classList.add('hide');
 }
 
@@ -1031,6 +1776,7 @@ function startGame(){
   gameState='play';setQuest(0);updateHUD();last=performance.now();
   canvas.requestPointerLock();
   setTimeout(()=>toast('Find the wizard by the blue beacon of light'),400);
+  setTimeout(()=>toast('Lysander & Damon march with you — G: gather · T: attack · H: regroup'),3400);
 }
 $('#startBtn').onclick=startGame;
 
@@ -1038,13 +1784,32 @@ function gameOver(){
   gameState='over';document.exitPointerLock();
   showEnd('YOU HAVE FALLEN','The shadows of the Preserve overcame you — but the Ancient World grants second chances.','RISE AGAIN');
 }
+// ===== GRAND FINALE — cinematic after the Titan falls =====
+let finaleT=0,finaleBeam=null;
+function startFinale(){
+  gameState='finale';document.exitPointerLock();finaleT=4.8;
+  $('#bossbar').classList.add('hide');
+  // vanquish every remaining beast in a wave of golden light
+  for(const d of demons){if(d.alive){d.alive=false;
+    burst(new THREE.Vector3(d.x,1.6,d.z),0xffd24a,22,7);scene.remove(d.group);}}
+  // a rising pillar of light where the Titan fell
+  finaleBeam=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,140,28,1,true),
+    new THREE.MeshBasicMaterial({color:0xffd24a,transparent:true,opacity:0,side:THREE.DoubleSide,
+      blending:THREE.AdditiveBlending,depthWrite:false}));
+  finaleBeam.position.set(titanArena.x,70,titanArena.z);scene.add(finaleBeam);
+  const fl=new THREE.PointLight(0xffd24a,0,260);fl.position.set(titanArena.x,24,titanArena.z);
+  scene.add(fl);finaleBeam.userData.light=fl;
+  $('#finale').classList.remove('hide');
+  toast('THE TITAN FALLS — the Sunstone erupts with light!');
+}
 function win(){
   gameState='won';document.exitPointerLock();
-  showEnd('THE SUNSTONE IS YOURS','Light floods the Verdant Preserve. The rift is sealed, the demons undone, and the ancient artifact rests in your hands. The sanctuary — and the Ancient World — endure because of you.','PLAY AGAIN');
+  $('#finale').classList.add('hide');$('#finale').style.opacity=0;
+  showEnd('THE TITAN IS FALLEN','With Polyphemus cast down, the last rift collapses in a blaze of gold. The remnants dissolve to mist, the deep rift seals forever, and the Sunstone blazes bright in your hands. The Preserve — and the whole Ancient World — endure because of you and your faithful hoplites.','PLAY AGAIN');
 }
 function showEnd(title,body,btn){
   overlay.innerHTML='<h2>'+title+'</h2><p>'+body+'</p>'+
-    '<p style="margin-top:8px">Demons slain: <b style="color:var(--gold)">'+player.kills+'</b>'+
+    '<p style="margin-top:8px">Beasts slain: <b style="color:var(--gold)">'+player.kills+'</b>'+
     ' &nbsp;·&nbsp; Moonflowers: <b style="color:var(--gold)">'+flowersGot+'/3</b></p>'+
     '<button class="btn" id="againBtn">'+btn+'</button>';
   overlay.classList.remove('hide');$('#hud').classList.add('hide');
